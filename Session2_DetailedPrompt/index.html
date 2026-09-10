@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tip Splitter</title>
+<style>
+  :root{
+    --paper:#F4F1EA;
+    --ink:#1C1A17;
+    --stamp:#C2452D;
+    --muted:#8A8175;
+    --hairline:#DDD6C8;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--paper);
+    color:var(--ink);
+  }
+
+  body{
+    font-family:Georgia, "Iowan Old Style", "Times New Roman", serif;
+    padding:40px 16px 80px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .receipt{
+    width:100%;
+    max-width:420px;
+  }
+
+  .mono{
+    font-family:Menlo, Consolas, "Courier New", ui-monospace, monospace;
+  }
+
+  .label{
+    font-variant:small-caps;
+    letter-spacing:0.12em;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom:28px;
+  }
+
+  header h1{
+    margin:0 0 6px;
+    font-size:26px;
+    letter-spacing:0.04em;
+  }
+
+  header .tagline{
+    font-variant:small-caps;
+    letter-spacing:0.18em;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .tear{
+    border:none;
+    border-top:1px dashed var(--hairline);
+    margin:26px 0;
+  }
+
+  .section-title{
+    font-variant:small-caps;
+    letter-spacing:0.14em;
+    color:var(--muted);
+    font-size:14px;
+    margin:0 0 14px;
+  }
+
+  .field{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px;
+  }
+
+  .field label{
+    white-space:nowrap;
+  }
+
+  .field .input-wrap{
+    display:flex;
+    align-items:baseline;
+    flex:1;
+    max-width:200px;
+    border-bottom:1px solid var(--hairline);
+    padding-bottom:4px;
+  }
+
+  .field .prefix{
+    color:var(--muted);
+    margin-right:4px;
+  }
+
+  input[type="number"], input[type="text"]{
+    font-family:Menlo, Consolas, "Courier New", ui-monospace, monospace;
+    font-size:17px;
+    color:var(--ink);
+    background:transparent;
+    border:none;
+    outline:none;
+    width:100%;
+    text-align:right;
+    padding:0;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+  input[type="number"]{
+    -moz-appearance:textfield;
+  }
+
+  .tip-buttons{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:8px;
+    margin-bottom:14px;
+  }
+
+  .tip-btn{
+    font-family:Menlo, Consolas, "Courier New", ui-monospace, monospace;
+    font-size:15px;
+    background:transparent;
+    border:1px solid var(--ink);
+    color:var(--ink);
+    padding:10px 4px;
+    cursor:pointer;
+  }
+
+  .tip-btn:hover{
+    background:rgba(28,26,23,0.06);
+  }
+
+  .tip-btn.active{
+    background:var(--stamp);
+    border-color:var(--stamp);
+    color:var(--paper);
+  }
+
+  .custom-tip-row{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    border-bottom:1px solid var(--hairline);
+    padding-bottom:6px;
+  }
+
+  .custom-tip-row .label{
+    white-space:nowrap;
+  }
+
+  .custom-tip-row .input-wrap{
+    display:flex;
+    align-items:baseline;
+    flex:1;
+  }
+
+  .custom-tip-row .suffix{
+    color:var(--muted);
+    margin-left:2px;
+  }
+
+  .totals-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:12px;
+  }
+
+  .totals-row .amount{
+    font-size:17px;
+  }
+
+  .grand-line{
+    border-top:1px dashed var(--hairline);
+    padding-top:12px;
+    margin-top:4px;
+  }
+
+  .per-person-block{
+    text-align:center;
+    margin:22px 0 4px;
+  }
+
+  .per-person-block .label{
+    display:block;
+    margin-bottom:8px;
+  }
+
+  .per-person-amount{
+    font-size:52px;
+    font-weight:700;
+    color:var(--stamp);
+    line-height:1;
+  }
+
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:6px;
+    cursor:pointer;
+  }
+
+  .toggle-row .label{
+    color:var(--ink);
+    font-size:14px;
+  }
+
+  .switch{
+    position:relative;
+    width:42px;
+    height:22px;
+    border:1px solid var(--ink);
+    flex-shrink:0;
+  }
+
+  .switch::after{
+    content:"";
+    position:absolute;
+    top:2px;
+    left:2px;
+    width:16px;
+    height:16px;
+    background:var(--ink);
+    transition:transform 0.15s ease;
+  }
+
+  .toggle-row.on .switch{
+    border-color:var(--stamp);
+    background:rgba(194,69,45,0.08);
+  }
+
+  .toggle-row.on .switch::after{
+    background:var(--stamp);
+    transform:translateX(20px);
+  }
+
+  .toggle-help{
+    color:var(--muted);
+    font-size:12px;
+    margin:0 0 18px;
+    max-width:320px;
+  }
+
+  .person-rows{
+    margin-top:10px;
+  }
+
+  .person-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+    border-bottom:1px dashed var(--hairline);
+    padding:8px 0;
+  }
+
+  .person-row .p-name{
+    white-space:nowrap;
+    min-width:78px;
+  }
+
+  .person-row .p-extra{
+    display:flex;
+    align-items:baseline;
+    flex:1;
+  }
+
+  .person-row .p-extra .prefix{
+    color:var(--muted);
+    margin-right:2px;
+    font-size:14px;
+  }
+
+  .person-row .p-extra input{
+    font-size:15px;
+  }
+
+  .person-row .p-final{
+    min-width:78px;
+    text-align:right;
+    font-size:18px;
+  }
+
+  .surplus-line{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    color:var(--muted);
+    font-size:14px;
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px dashed var(--hairline);
+  }
+
+  .surplus-line .amount{
+    color:var(--stamp);
+  }
+
+  .hidden{
+    display:none !important;
+  }
+
+  .copy-btn{
+    display:block;
+    width:100%;
+    font-family:Georgia, "Iowan Old Style", serif;
+    font-variant:small-caps;
+    letter-spacing:0.1em;
+    font-size:16px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:14px;
+    cursor:pointer;
+    margin-top:6px;
+  }
+
+  .copy-btn:hover{
+    background:#33302a;
+  }
+
+  .copy-confirm{
+    text-align:center;
+    font-variant:small-caps;
+    letter-spacing:0.12em;
+    color:var(--stamp);
+    font-size:13px;
+    margin-top:10px;
+    min-height:16px;
+  }
+
+  footer{
+    text-align:center;
+    margin-top:30px;
+    color:var(--muted);
+    font-size:12px;
+    letter-spacing:0.08em;
+  }
+</style>
+</head>
+<body>
+
+<div class="receipt">
+
+  <header>
+    <h1>Tip Splitter</h1>
+    <div class="tagline">the friendly diner</div>
+  </header>
+
+  <hr class="tear">
+
+  <div class="section-title">the bill</div>
+
+  <div class="field">
+    <label class="label">bill total</label>
+    <div class="input-wrap">
+      <span class="prefix mono">$</span>
+      <input type="number" id="billInput" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">number of people</label>
+    <div class="input-wrap">
+      <input type="number" id="peopleInput" inputmode="numeric" min="1" step="1" value="2">
+    </div>
+  </div>
+
+  <hr class="tear">
+
+  <div class="section-title">the tip</div>
+
+  <div class="tip-buttons" id="tipButtons">
+    <button type="button" class="tip-btn" data-percent="15">15%</button>
+    <button type="button" class="tip-btn active" data-percent="18">18%</button>
+    <button type="button" class="tip-btn" data-percent="20">20%</button>
+    <button type="button" class="tip-btn" data-percent="25">25%</button>
+  </div>
+
+  <div class="custom-tip-row">
+    <span class="label">custom</span>
+    <div class="input-wrap">
+      <input type="number" id="customTipInput" inputmode="decimal" min="0" step="1" placeholder="0">
+      <span class="suffix mono">%</span>
+    </div>
+  </div>
+
+  <hr class="tear">
+
+  <div class="section-title">the total</div>
+
+  <div class="totals-row">
+    <span class="label">tip amount</span>
+    <span class="amount mono" id="tipAmountOut">$0.00</span>
+  </div>
+
+  <div class="totals-row grand-line">
+    <span class="label">grand total</span>
+    <span class="amount mono" id="grandTotalOut">$0.00</span>
+  </div>
+
+  <div class="per-person-block" id="evenPerPersonBlock">
+    <span class="label">amount per person</span>
+    <div class="per-person-amount mono" id="perPersonOut">$0.00</div>
+  </div>
+
+  <div class="surplus-line hidden" id="roundSurplusLine">
+    <span class="label">extra tip (from rounding)</span>
+    <span class="amount mono" id="roundSurplusOut">$0.00</span>
+  </div>
+
+  <hr class="tear">
+
+  <div class="section-title">adjustments</div>
+
+  <div class="toggle-row" id="unevenToggleRow">
+    <span class="label">uneven split</span>
+    <span class="switch"></span>
+  </div>
+  <p class="toggle-help">mark who owes extra (say, the surf &amp; turf) &mdash; it comes off the top before the rest splits evenly, then goes back on their line.</p>
+
+  <div class="person-rows hidden" id="personRows"></div>
+
+  <div class="toggle-row" id="roundToggleRow" style="margin-top:18px;">
+    <span class="label">round up</span>
+    <span class="switch"></span>
+  </div>
+  <p class="toggle-help">rounds every person's share up to the next whole dollar. the leftover becomes extra tip.</p>
+
+  <hr class="tear">
+
+  <button type="button" class="copy-btn" id="copyBtn">copy for group chat</button>
+  <div class="copy-confirm" id="copyConfirm"></div>
+
+  <footer>* * * thank you * * *</footer>
+
+</div>
+
+<script>
+(function(){
+  var billInput = document.getElementById('billInput');
+  var peopleInput = document.getElementById('peopleInput');
+  var tipButtons = document.getElementById('tipButtons');
+  var customTipInput = document.getElementById('customTipInput');
+
+  var tipAmountOut = document.getElementById('tipAmountOut');
+  var grandTotalOut = document.getElementById('grandTotalOut');
+  var perPersonOut = document.getElementById('perPersonOut');
+  var evenPerPersonBlock = document.getElementById('evenPerPersonBlock');
+
+  var roundSurplusLine = document.getElementById('roundSurplusLine');
+  var roundSurplusOut = document.getElementById('roundSurplusOut');
+
+  var unevenToggleRow = document.getElementById('unevenToggleRow');
+  var personRowsEl = document.getElementById('personRows');
+  var roundToggleRow = document.getElementById('roundToggleRow');
+
+  var copyBtn = document.getElementById('copyBtn');
+  var copyConfirm = document.getElementById('copyConfirm');
+
+  var tipPercent = 18;
+  var customActive = false;
+  var unevenSplit = false;
+  var roundUp = false;
+  var extras = []; // dollar amount each person owes extra
+
+  var lastState = null; // most recent computed values, used by the copy button
+
+  function formatCurrency(n){
+    if (!isFinite(n)) n = 0;
+    var fixed = n.toFixed(2);
+    // avoid a stray "-0.00"
+    if (fixed === "-0.00") fixed = "0.00";
+    return "$" + fixed;
+  }
+
+  function getNumPeople(){
+    var n = parseInt(peopleInput.value, 10);
+    if (!n || n < 1) n = 1;
+    return n;
+  }
+
+  function syncExtrasLength(n){
+    while (extras.length < n) extras.push(0);
+    extras.length = n;
+  }
+
+  function setTipPercent(p, fromCustom){
+    tipPercent = p;
+    customActive = !!fromCustom;
+    var btns = tipButtons.querySelectorAll('.tip-btn');
+    for (var i = 0; i < btns.length; i++){
+      var isMatch = !customActive && parseFloat(btns[i].getAttribute('data-percent')) === p;
+      btns[i].classList.toggle('active', isMatch);
+    }
+    if (!fromCustom){
+      customTipInput.value = "";
+    }
+    calculate();
+  }
+
+  tipButtons.addEventListener('click', function(e){
+    var btn = e.target.closest('.tip-btn');
+    if (!btn) return;
+    var p = parseFloat(btn.getAttribute('data-percent'));
+    setTipPercent(p, false);
+  });
+
+  customTipInput.addEventListener('input', function(){
+    var v = parseFloat(customTipInput.value);
+    if (isNaN(v)) v = 0;
+    tipPercent = v;
+    customActive = true;
+    var btns = tipButtons.querySelectorAll('.tip-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+    calculate();
+  });
+
+  billInput.addEventListener('input', calculate);
+  peopleInput.addEventListener('input', function(){
+    renderPersonRows();
+    calculate();
+  });
+
+  unevenToggleRow.addEventListener('click', function(){
+    unevenSplit = !unevenSplit;
+    unevenToggleRow.classList.toggle('on', unevenSplit);
+    personRowsEl.classList.toggle('hidden', !unevenSplit);
+    evenPerPersonBlock.classList.toggle('hidden', unevenSplit);
+    if (unevenSplit) renderPersonRows();
+    calculate();
+  });
+
+  roundToggleRow.addEventListener('click', function(){
+    roundUp = !roundUp;
+    roundToggleRow.classList.toggle('on', roundUp);
+    calculate();
+  });
+
+  function renderPersonRows(){
+    var n = getNumPeople();
+    syncExtrasLength(n);
+    personRowsEl.innerHTML = "";
+    for (var i = 0; i < n; i++){
+      (function(idx){
+        var row = document.createElement('div');
+        row.className = 'person-row';
+
+        var name = document.createElement('span');
+        name.className = 'p-name label';
+        name.textContent = 'person ' + (idx + 1);
+
+        var extraWrap = document.createElement('div');
+        extraWrap.className = 'p-extra';
+        var prefix = document.createElement('span');
+        prefix.className = 'prefix mono';
+        prefix.textContent = '+$';
+        var extraInput = document.createElement('input');
+        extraInput.type = 'number';
+        extraInput.min = '0';
+        extraInput.step = '0.01';
+        extraInput.placeholder = '0.00';
+        extraInput.value = extras[idx] ? extras[idx] : '';
+        extraInput.addEventListener('input', function(){
+          var v = parseFloat(extraInput.value);
+          extras[idx] = isNaN(v) ? 0 : v;
+          calculate();
+        });
+        extraWrap.appendChild(prefix);
+        extraWrap.appendChild(extraInput);
+
+        var finalOut = document.createElement('span');
+        finalOut.className = 'p-final mono';
+        finalOut.id = 'personFinal_' + idx;
+        finalOut.textContent = '$0.00';
+
+        row.appendChild(name);
+        row.appendChild(extraWrap);
+        row.appendChild(finalOut);
+        personRowsEl.appendChild(row);
+      })(i);
+    }
+  }
+
+  function calculate(){
+    var bill = parseFloat(billInput.value);
+    if (isNaN(bill) || bill < 0) bill = 0;
+
+    var numPeople = getNumPeople();
+    syncExtrasLength(numPeople);
+
+    var pct = tipPercent;
+    if (isNaN(pct) || pct < 0) pct = 0;
+
+    var tipAmount = bill * (pct / 100);
+    var grandTotal = bill + tipAmount;
+
+    tipAmountOut.textContent = formatCurrency(tipAmount);
+    grandTotalOut.textContent = formatCurrency(grandTotal);
+
+    var surplus = 0;
+    var perPersonLines = []; // { name, final } for copy text
+
+    if (!unevenSplit){
+      var perPerson = numPeople > 0 ? grandTotal / numPeople : 0;
+      var displayPerPerson = perPerson;
+
+      if (roundUp){
+        var rounded = Math.ceil(perPerson - 1e-9);
+        if (rounded < 0) rounded = 0;
+        surplus = (rounded * numPeople) - grandTotal;
+        displayPerPerson = rounded;
+      }
+
+      perPersonOut.textContent = formatCurrency(displayPerPerson);
+
+      for (var i = 0; i < numPeople; i++){
+        perPersonLines.push({ name: 'Person ' + (i + 1), final: displayPerPerson, extra: 0 });
+      }
+    } else {
+      var totalExtra = 0;
+      for (var j = 0; j < extras.length; j++) totalExtra += (extras[j] || 0);
+
+      var sharedPool = grandTotal - totalExtra;
+      var evenShare = numPeople > 0 ? sharedPool / numPeople : 0;
+
+      for (var k = 0; k < numPeople; k++){
+        var extraAmt = extras[k] || 0;
+        var final = evenShare + extraAmt;
+        var displayFinal = final;
+
+        if (roundUp){
+          var roundedFinal = Math.ceil(final - 1e-9);
+          if (roundedFinal < 0) roundedFinal = 0;
+          surplus += (roundedFinal - final);
+          displayFinal = roundedFinal;
+        }
+
+        var el = document.getElementById('personFinal_' + k);
+        if (el) el.textContent = formatCurrency(displayFinal);
+
+        perPersonLines.push({ name: 'Person ' + (k + 1), final: displayFinal, extra: extraAmt });
+      }
+    }
+
+    if (roundUp && surplus > 0.001){
+      roundSurplusLine.classList.remove('hidden');
+      roundSurplusOut.textContent = formatCurrency(surplus);
+    } else {
+      roundSurplusLine.classList.add('hidden');
+    }
+
+    lastState = {
+      bill: bill,
+      pct: pct,
+      tipAmount: tipAmount,
+      grandTotal: grandTotal,
+      numPeople: numPeople,
+      unevenSplit: unevenSplit,
+      roundUp: roundUp,
+      surplus: surplus,
+      lines: perPersonLines
+    };
+  }
+
+  function buildSummaryText(){
+    if (!lastState) calculate();
+    var s = lastState;
+    var lines = [];
+    lines.push('The Friendly Diner');
+    lines.push('Bill: ' + formatCurrency(s.bill));
+    lines.push('Tip (' + s.pct + '%): ' + formatCurrency(s.tipAmount));
+    lines.push('Total: ' + formatCurrency(s.grandTotal));
+    lines.push('');
+    for (var i = 0; i < s.lines.length; i++){
+      var line = s.lines[i];
+      var text = line.name + ': ' + formatCurrency(line.final);
+      if (s.unevenSplit && line.extra > 0){
+        text += ' (incl. +' + formatCurrency(line.extra) + ' extra)';
+      }
+      lines.push(text);
+    }
+    if (s.roundUp && s.surplus > 0.001){
+      lines.push('');
+      lines.push('Extra tip from rounding: ' + formatCurrency(s.surplus));
+    }
+    return lines.join('\n');
+  }
+
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    ta.style.left = '-1000px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  copyBtn.addEventListener('click', function(){
+    var text = buildSummaryText();
+    var showConfirm = function(ok){
+      copyConfirm.textContent = ok ? 'copied to clipboard' : 'copy failed — select text manually';
+      if (ok){
+        setTimeout(function(){
+          if (copyConfirm.textContent === 'copied to clipboard'){
+            copyConfirm.textContent = '';
+          }
+        }, 3000);
+      }
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        showConfirm(true);
+      }, function(){
+        showConfirm(fallbackCopy(text));
+      });
+    } else {
+      showConfirm(fallbackCopy(text));
+    }
+  });
+
+  // init
+  renderPersonRows();
+  calculate();
+})();
+</script>
+
+</body>
+</html>
