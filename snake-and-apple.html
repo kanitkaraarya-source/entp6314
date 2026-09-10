@@ -1,4 +1,8 @@
 <!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Snake Break</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
@@ -289,6 +293,19 @@
     font-weight: 700;
   }
 
+  #playerName {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  #playerName::placeholder { color: var(--muted); }
+  #playerName:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
   .scoreline {
     display: flex;
     justify-content: space-between;
@@ -317,6 +334,8 @@
     padding-left: 10px;
   }
 </style>
+</head>
+<body>
 
 <main>
   <header class="page">
@@ -374,9 +393,14 @@
 
   <div class="panel">
     <div class="card">
+      <h2>Player</h2>
+      <input id="playerName" type="text" maxlength="18" placeholder="Enter your name" autocomplete="off" />
+    </div>
+
+    <div class="card">
       <h2>Standings</h2>
-      <div class="scoreline"><span>This run</span><strong id="panelScore">0 apples</strong></div>
-      <div class="scoreline"><span>Personal best</span><strong id="panelBest">0 apples</strong></div>
+      <div class="scoreline"><span id="runLabel">This run</span><strong id="panelScore">0 apples</strong></div>
+      <div class="scoreline"><span id="bestLabel">Personal best</span><strong id="panelBest">0 apples</strong></div>
     </div>
 
     <div class="card">
@@ -384,7 +408,7 @@
       <ul>
         <li><strong>Arrow keys</strong> or <strong>WASD</strong> steer the snake</li>
         <li><strong>Space</strong> pauses, the D-pad works by mouse or touch</li>
-        <li>Walls and your own tail are both fatal — this is not a metaphor for the joke you just heard</li>
+        <li>Drift off one edge of the screen and you'll reappear on the other — only your own tail is fatal</li>
       </ul>
     </div>
 
@@ -407,12 +431,17 @@
   var panelScore = document.getElementById('panelScore');
   var panelBest = document.getElementById('panelBest');
   var quipCard = document.getElementById('quipCard');
+  var playerNameInput = document.getElementById('playerName');
+  var runLabel = document.getElementById('runLabel');
+  var bestLabel = document.getElementById('bestLabel');
 
   var HIGH_KEY = 'snakeBreakHighScore';
+  var NAME_KEY = 'snakeBreakPlayerName';
   var best = 0;
   try { best = parseInt(localStorage.getItem(HIGH_KEY), 10) || 0; } catch (e) { best = 0; }
+  try { playerNameInput.value = localStorage.getItem(NAME_KEY) || ''; } catch (e) {}
 
-  var quips = [
+  var idleQuips = [
     "Rumor has it every apple eaten cancels one dad joke. Science is still confirming this.",
     "Fun fact: the snake has heard every pun the professor has, and still keeps eating.",
     "An apple a day keeps the pun-ishment away. Mostly.",
@@ -420,6 +449,37 @@
     "Legend says a high score here buys you one joke-free lecture. Legend is unconfirmed.",
     "Every apple is a small, crunchy act of rebellion against dad jokes everywhere."
   ];
+
+  var insultTemplates = [
+    "{name}, the apple deserved better than that.",
+    "Nice try, {name}. The snake respectfully disagrees.",
+    "That wasn't a wall, {name}, that was a lesson.",
+    "The tail got you again, {name}. It always does.",
+    "Somewhere, a Nokia from 2003 is outscoring you, {name}.",
+    "Bold of you, {name}, to trust yourself with four directions.",
+    "Ten pixels of snake just outsmarted you, {name}.",
+    "{name}, that run belongs in a blooper reel, not a scoreboard."
+  ];
+  var fallbackNames = ["champ", "legend", "maestro", "ace", "genius", "hotshot"];
+
+  function pickInsult() {
+    var name = (playerNameInput.value || '').trim();
+    var label = name || fallbackNames[Math.floor(Math.random() * fallbackNames.length)];
+    var t = insultTemplates[Math.floor(Math.random() * insultTemplates.length)];
+    return t.replace('{name}', label);
+  }
+
+  function updateNameLabels() {
+    var name = (playerNameInput.value || '').trim();
+    runLabel.textContent = name || 'This run';
+    bestLabel.textContent = name ? name + "'s best" : 'Personal best';
+  }
+
+  playerNameInput.addEventListener('input', function () {
+    updateNameLabels();
+    try { localStorage.setItem(NAME_KEY, playerNameInput.value); } catch (e) {}
+  });
+  updateNameLabels();
 
   var state, snake, dir, nextDir, apple, score, speedMs, timer;
 
@@ -434,6 +494,7 @@
     speedMs = 150;
     placeApple();
     updateScoreUI();
+    quipCard.textContent = idleQuips[Math.floor(Math.random() * idleQuips.length)];
     showOverlay('SNAKE &amp; APPLE', 'PRESS START');
     draw();
   }
@@ -496,15 +557,17 @@
       try { localStorage.setItem(HIGH_KEY, String(best)); } catch (e) {}
     }
     updateScoreUI();
-    quipCard.textContent = quips[Math.floor(Math.random() * quips.length)];
+    quipCard.textContent = pickInsult();
     showOverlay('GAME OVER', 'PRESS START TO RETRY');
   }
 
   function tick() {
     dir = nextDir;
-    var head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    var head = {
+      x: (snake[0].x + dir.x + GRID) % GRID,
+      y: (snake[0].y + dir.y + GRID) % GRID
+    };
 
-    if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) return gameOver();
     if (snake.some(function (s) { return s.x === head.x && s.y === head.y; })) return gameOver();
 
     snake.unshift(head);
@@ -571,3 +634,5 @@
   newGame();
 })();
 </script>
+</body>
+</html>
