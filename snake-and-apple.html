@@ -1,0 +1,573 @@
+<!doctype html>
+<title>Snake Break</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #eae4d6;
+    --bg-vignette: #ddd6c2;
+    --ink: #241f16;
+    --muted: #766f5d;
+    --shell: #d3cdbc;
+    --shell-hi: #e7e2d2;
+    --shell-lo: #a89f89;
+    --shell-edge: #8f8770;
+    --lcd: #93a06e;
+    --lcd-dim: #7c8a5c;
+    --pixel: #2f3a22;
+    --accent: #b6432c;
+    --accent-ink: #fdf5ea;
+    --key: #c7c0aa;
+    --key-hi: #dcd6c2;
+    --key-ink: #2b2617;
+    --card: #f4f0e5;
+    --card-border: #d8d1bd;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131109;
+      --bg-vignette: #1b180f;
+      --ink: #ece6d6;
+      --muted: #a49a82;
+      --shell: #3c3626;
+      --shell-hi: #4c4531;
+      --shell-lo: #211d13;
+      --shell-edge: #171409;
+      --lcd: #7c8a5c;
+      --lcd-dim: #66714c;
+      --pixel: #1c2313;
+      --accent: #d9603f;
+      --accent-ink: #1c1208;
+      --key: #4a4331;
+      --key-hi: #5b533b;
+      --key-ink: #ece6d6;
+      --card: #1c1810;
+      --card-border: #34301f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #131109;
+    --bg-vignette: #1b180f;
+    --ink: #ece6d6;
+    --muted: #a49a82;
+    --shell: #3c3626;
+    --shell-hi: #4c4531;
+    --shell-lo: #211d13;
+    --shell-edge: #171409;
+    --lcd: #7c8a5c;
+    --lcd-dim: #66714c;
+    --pixel: #1c2313;
+    --accent: #d9603f;
+    --accent-ink: #1c1208;
+    --key: #4a4331;
+    --key-hi: #5b533b;
+    --key-ink: #ece6d6;
+    --card: #1c1810;
+    --card-border: #34301f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% 15%, var(--bg-vignette), var(--bg));
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px 56px;
+  }
+
+  main {
+    width: 100%;
+    max-width: 920px;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 40px;
+    align-items: start;
+  }
+
+  @media (max-width: 760px) {
+    main { grid-template-columns: 1fr; justify-items: center; }
+  }
+
+  header.page {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  h1 {
+    font-family: "Space Grotesk", ui-sans-serif, sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    margin: 0 0 6px;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+
+  header.page p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.98rem;
+  }
+
+  /* ---------- phone ---------- */
+
+  .phone-wrap {
+    display: flex;
+    justify-content: center;
+  }
+
+  .phone {
+    width: 320px;
+    background: linear-gradient(155deg, var(--shell-hi), var(--shell) 45%, var(--shell-lo));
+    border: 1px solid var(--shell-edge);
+    border-radius: 34px 34px 46px 46px;
+    padding: 20px 22px 26px;
+    box-shadow:
+      0 1px 0 var(--shell-hi) inset,
+      0 30px 50px -30px rgba(0,0,0,0.45);
+  }
+
+  .earpiece {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+  .earpiece span {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--shell-lo);
+  }
+
+  .screen-bezel {
+    background: var(--shell-lo);
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25) inset;
+  }
+
+  .lcd {
+    position: relative;
+    background: var(--lcd);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3) inset;
+  }
+
+  #board {
+    display: block;
+    width: 100%;
+    image-rendering: pixelated;
+  }
+
+  .lcd-hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    font-family: "Press Start 2P", monospace;
+    color: var(--pixel);
+  }
+
+  .lcd-score {
+    position: absolute;
+    top: 6px; left: 8px; right: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    letter-spacing: 0.02em;
+  }
+
+  .lcd-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    padding: 0 16px;
+    background: color-mix(in srgb, var(--lcd) 88%, black 12%);
+  }
+  .lcd-overlay[hidden] { display: none; }
+  .lcd-overlay .big { font-size: 13px; line-height: 1.6; }
+  .lcd-overlay .small { font-size: 8px; line-height: 1.8; opacity: 0.85; }
+  .blink { animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .blink { animation: none; } }
+
+  .brandrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 16px 4px 10px;
+    font-family: "Space Grotesk", sans-serif;
+    color: var(--key-ink);
+  }
+  .brandrow .model { font-weight: 700; font-size: 0.8rem; letter-spacing: 0.08em; }
+  .brandrow .sub { font-size: 0.7rem; font-style: italic; color: var(--muted); }
+
+  /* soft keys */
+  .softkeys {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 6px;
+    margin-bottom: 12px;
+  }
+  .softkey {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-weight: 600;
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+    color: var(--key-ink);
+    background: none;
+    border: none;
+    padding: 4px 6px;
+    cursor: pointer;
+  }
+  .softkey:hover { color: var(--accent); }
+
+  .dpad-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  button.key {
+    appearance: none;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(160deg, var(--key-hi), var(--key));
+    color: var(--key-ink);
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    box-shadow: 0 2px 0 var(--shell-lo), 0 3px 5px rgba(0,0,0,0.2);
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.05s ease;
+  }
+  button.key:active { transform: translateY(2px); box-shadow: 0 0 0 var(--shell-lo); }
+  button.key:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.key.wide { grid-column: span 1; }
+  button.key.ok {
+    background: linear-gradient(160deg, var(--accent), color-mix(in srgb, var(--accent) 75%, black));
+    color: var(--accent-ink);
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- side panel ---------- */
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+
+  .card h2 {
+    margin: 0 0 8px;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .scoreline {
+    display: flex;
+    justify-content: space-between;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+    padding: 3px 0;
+    color: var(--muted);
+  }
+  .scoreline strong { color: var(--ink); font-weight: 600; }
+
+  .card ul {
+    margin: 0;
+    padding-left: 1.1em;
+    color: var(--muted);
+    font-size: 0.86rem;
+    line-height: 1.65;
+  }
+  .card ul li strong { color: var(--ink); }
+
+  .quip {
+    font-style: italic;
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.6;
+    border-left: 2px solid var(--accent);
+    padding-left: 10px;
+  }
+</style>
+
+<main>
+  <header class="page">
+    <h1>Snake Break</h1>
+    <p>One dumb pun is worth about four apples. Eat, don't groan.</p>
+  </header>
+
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="earpiece"><span></span><span></span><span></span><span></span><span></span></div>
+
+      <div class="screen-bezel">
+        <div class="lcd">
+          <canvas id="board" width="180" height="180"></canvas>
+          <div class="lcd-hud">
+            <div class="lcd-score">
+              <span id="scoreDisplay">SCORE 000</span>
+              <span id="bestDisplay">BEST 000</span>
+            </div>
+          </div>
+          <div class="lcd-overlay" id="overlay">
+            <div class="big">SNAKE &amp; APPLE</div>
+            <div class="small blink">PRESS START</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="brandrow">
+        <span class="model">SN-3310</span>
+        <span class="sub">and apple</span>
+      </div>
+
+      <div class="softkeys">
+        <button class="softkey" id="pauseBtn" type="button">Pause</button>
+        <button class="softkey" id="restartBtn" type="button">Restart</button>
+      </div>
+
+      <div class="dpad-row">
+        <span></span>
+        <button class="key" id="btnUp" type="button" aria-label="Move up">&#9650;</button>
+        <span></span>
+      </div>
+      <div class="dpad-row">
+        <button class="key" id="btnLeft" type="button" aria-label="Move left">&#9664;</button>
+        <button class="key ok" id="btnOk" type="button">START</button>
+        <button class="key" id="btnRight" type="button" aria-label="Move right">&#9654;</button>
+      </div>
+      <div class="dpad-row">
+        <span></span>
+        <button class="key" id="btnDown" type="button" aria-label="Move down">&#9660;</button>
+        <span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="card">
+      <h2>Standings</h2>
+      <div class="scoreline"><span>This run</span><strong id="panelScore">0 apples</strong></div>
+      <div class="scoreline"><span>Personal best</span><strong id="panelBest">0 apples</strong></div>
+    </div>
+
+    <div class="card">
+      <h2>Controls</h2>
+      <ul>
+        <li><strong>Arrow keys</strong> or <strong>WASD</strong> steer the snake</li>
+        <li><strong>Space</strong> pauses, the D-pad works by mouse or touch</li>
+        <li>Walls and your own tail are both fatal — this is not a metaphor for the joke you just heard</li>
+      </ul>
+    </div>
+
+    <div class="card quip" id="quipCard">
+      Rumor has it every apple eaten cancels one dad joke. Science is still confirming this.
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  var GRID = 18;
+  var canvas = document.getElementById('board');
+  var ctx = canvas.getContext('2d');
+  var cell = canvas.width / GRID;
+
+  var overlay = document.getElementById('overlay');
+  var scoreDisplay = document.getElementById('scoreDisplay');
+  var bestDisplay = document.getElementById('bestDisplay');
+  var panelScore = document.getElementById('panelScore');
+  var panelBest = document.getElementById('panelBest');
+  var quipCard = document.getElementById('quipCard');
+
+  var HIGH_KEY = 'snakeBreakHighScore';
+  var best = 0;
+  try { best = parseInt(localStorage.getItem(HIGH_KEY), 10) || 0; } catch (e) { best = 0; }
+
+  var quips = [
+    "Rumor has it every apple eaten cancels one dad joke. Science is still confirming this.",
+    "Fun fact: the snake has heard every pun the professor has, and still keeps eating.",
+    "An apple a day keeps the pun-ishment away. Mostly.",
+    "The snake does not laugh at puns. The snake has never once laughed.",
+    "Legend says a high score here buys you one joke-free lecture. Legend is unconfirmed.",
+    "Every apple is a small, crunchy act of rebellion against dad jokes everywhere."
+  ];
+
+  var state, snake, dir, nextDir, apple, score, speedMs, timer;
+
+  function newGame() {
+    state = 'ready';
+    snake = [
+      { x: 8, y: 9 }, { x: 7, y: 9 }, { x: 6, y: 9 }, { x: 5, y: 9 }
+    ];
+    dir = { x: 1, y: 0 };
+    nextDir = dir;
+    score = 0;
+    speedMs = 150;
+    placeApple();
+    updateScoreUI();
+    showOverlay('SNAKE &amp; APPLE', 'PRESS START');
+    draw();
+  }
+
+  function placeApple() {
+    var free = [];
+    for (var x = 0; x < GRID; x++) {
+      for (var y = 0; y < GRID; y++) {
+        var onSnake = snake.some(function (s) { return s.x === x && s.y === y; });
+        if (!onSnake) free.push({ x: x, y: y });
+      }
+    }
+    apple = free[Math.floor(Math.random() * free.length)];
+  }
+
+  function showOverlay(big, small) {
+    overlay.innerHTML =
+      '<div class="big">' + big + '</div>' +
+      '<div class="small' + (small.indexOf('PRESS') === 0 || small.indexOf('SPACE') === 0 ? ' blink' : '') + '">' + small + '</div>';
+    overlay.hidden = false;
+  }
+  function hideOverlay() { overlay.hidden = true; }
+
+  function updateScoreUI() {
+    var s = String(score).padStart(3, '0');
+    var b = String(Math.max(best, score)).padStart(3, '0');
+    scoreDisplay.textContent = 'SCORE ' + s;
+    bestDisplay.textContent = 'BEST ' + b;
+    panelScore.textContent = score + (score === 1 ? ' apple' : ' apples');
+    panelBest.textContent = Math.max(best, score) + (Math.max(best, score) === 1 ? ' apple' : ' apples');
+  }
+
+  function start() {
+    if (state === 'playing') return;
+    if (state === 'over') { newGame(); }
+    state = 'playing';
+    hideOverlay();
+    clearInterval(timer);
+    timer = setInterval(tick, speedMs);
+  }
+
+  function pause() {
+    if (state !== 'playing') return;
+    state = 'paused';
+    clearInterval(timer);
+    showOverlay('PAUSED', 'PRESS START TO RESUME');
+  }
+
+  function togglePause() {
+    if (state === 'playing') pause();
+    else if (state === 'paused') start();
+    else start();
+  }
+
+  function gameOver() {
+    state = 'over';
+    clearInterval(timer);
+    if (score > best) {
+      best = score;
+      try { localStorage.setItem(HIGH_KEY, String(best)); } catch (e) {}
+    }
+    updateScoreUI();
+    quipCard.textContent = quips[Math.floor(Math.random() * quips.length)];
+    showOverlay('GAME OVER', 'PRESS START TO RETRY');
+  }
+
+  function tick() {
+    dir = nextDir;
+    var head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+    if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) return gameOver();
+    if (snake.some(function (s) { return s.x === head.x && s.y === head.y; })) return gameOver();
+
+    snake.unshift(head);
+
+    if (head.x === apple.x && head.y === apple.y) {
+      score += 10;
+      updateScoreUI();
+      placeApple();
+      if (score % 50 === 0 && speedMs > 70) {
+        speedMs -= 10;
+        clearInterval(timer);
+        timer = setInterval(tick, speedMs);
+      }
+    } else {
+      snake.pop();
+    }
+
+    draw();
+  }
+
+  function draw() {
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--lcd').trim();
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    var pixel = getComputedStyle(document.documentElement).getPropertyValue('--pixel').trim();
+    ctx.fillStyle = pixel;
+
+    snake.forEach(function (s, i) {
+      var pad = i === 0 ? 0.5 : 1;
+      ctx.fillRect(s.x * cell + pad, s.y * cell + pad, cell - pad * 2, cell - pad * 2);
+    });
+
+    var ax = apple.x * cell, ay = apple.y * cell;
+    ctx.beginPath();
+    ctx.arc(ax + cell / 2, ay + cell / 2, cell / 2 - 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.clearRect(ax + cell / 2 - 0.6, ay + 1, 1.2, 1.6);
+  }
+
+  function setDir(x, y) {
+    if (dir.x === -x && dir.y === -y) return;
+    nextDir = { x: x, y: y };
+    if (state === 'ready') start();
+  }
+
+  document.addEventListener('keydown', function (e) {
+    switch (e.key) {
+      case 'ArrowUp': case 'w': case 'W': setDir(0, -1); e.preventDefault(); break;
+      case 'ArrowDown': case 's': case 'S': setDir(0, 1); e.preventDefault(); break;
+      case 'ArrowLeft': case 'a': case 'A': setDir(-1, 0); e.preventDefault(); break;
+      case 'ArrowRight': case 'd': case 'D': setDir(1, 0); e.preventDefault(); break;
+      case ' ': togglePause(); e.preventDefault(); break;
+      case 'Enter': if (state !== 'playing') start(); break;
+    }
+  });
+
+  document.getElementById('btnUp').addEventListener('click', function () { setDir(0, -1); });
+  document.getElementById('btnDown').addEventListener('click', function () { setDir(0, 1); });
+  document.getElementById('btnLeft').addEventListener('click', function () { setDir(-1, 0); });
+  document.getElementById('btnRight').addEventListener('click', function () { setDir(1, 0); });
+  document.getElementById('btnOk').addEventListener('click', function () { if (state !== 'playing') start(); else togglePause(); });
+  document.getElementById('pauseBtn').addEventListener('click', togglePause);
+  document.getElementById('restartBtn').addEventListener('click', newGame);
+
+  newGame();
+})();
+</script>
