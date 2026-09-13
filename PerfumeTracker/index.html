@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perfume Price Tracker</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #1c1a17;
+    --muted: #8a8175;
+    --card-bg: #ffffff;
+    --card-border: #ddd6c8;
+    --accent: #2dd4bf;
+    --drop: #1f9d55;
+    --drop-bg: #e7f8ee;
+    --hike: #d1364a;
+    --hike-bg: #fdeaee;
+    --flat: #8a8175;
+    --flat-bg: #f1efe9;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 24px 16px 64px;
+  }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  a.back {
+    display: inline-block;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+  a.back:hover { color: var(--ink); }
+
+  header h1 {
+    font-size: 1.9rem;
+    margin: 0 0 6px;
+  }
+
+  header p.lead {
+    color: var(--muted);
+    margin: 0 0 6px;
+    max-width: 640px;
+  }
+
+  .demo-banner {
+    background: #fff8e6;
+    border: 1px solid #f0dfa8;
+    color: #7a5c00;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    margin: 16px 0 24px;
+    line-height: 1.5;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 700px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+  }
+
+  .stat {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  .stat .num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .stat.drops .num { color: var(--drop); }
+  .stat.hikes .num { color: var(--hike); }
+
+  .stat .label {
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 4px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 18px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: 10px 0;
+    z-index: 5;
+  }
+
+  .controls input[type="search"] {
+    flex: 1 1 220px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    font-size: 0.9rem;
+    background: var(--card-bg);
+    color: var(--ink);
+  }
+
+  .filter-btn {
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--muted);
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .filter-btn.active {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+
+  select#sortSelect {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--ink);
+    font-size: 0.82rem;
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .item {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .item-main h3 {
+    margin: 0 0 2px;
+    font-size: 1.05rem;
+  }
+
+  .item-main .meta {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .item-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  svg.spark { display: block; }
+
+  .price-block {
+    text-align: right;
+    min-width: 92px;
+  }
+
+  .price-block .price {
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  .price-block .best-at {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    min-width: 64px;
+    justify-content: center;
+  }
+  .badge.drop { color: var(--drop); background: var(--drop-bg); }
+  .badge.hike { color: var(--hike); background: var(--hike-bg); }
+  .badge.flat { color: var(--flat); background: var(--flat-bg); }
+
+  .caret {
+    color: var(--muted);
+    transition: transform 0.15s ease;
+    font-size: 0.8rem;
+    padding-top: 4px;
+  }
+  .item.open .caret { transform: rotate(90deg); }
+
+  .retailers {
+    display: none;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--card-border);
+  }
+  .item.open .retailers { display: block; }
+
+  table.retailer-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.87rem;
+  }
+  table.retailer-table th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 4px 8px;
+  }
+  table.retailer-table td {
+    padding: 7px 8px;
+    border-top: 1px solid var(--card-border);
+  }
+  table.retailer-table tr.best td {
+    background: var(--drop-bg);
+    font-weight: 600;
+  }
+  table.retailer-table a {
+    color: inherit;
+    text-decoration: none;
+  }
+  table.retailer-table tr.best td:first-child::before {
+    content: "🏆 ";
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 0;
+  }
+
+  footer {
+    margin-top: 40px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="../">&larr; Back to demos</a>
+  <header>
+    <h1>🌸 Perfume Price Tracker</h1>
+    <p class="lead">Tracks price drops and price hikes across retailers, and shows where each fragrance is cheapest right now.</p>
+  </header>
+
+  <div class="demo-banner">
+    <strong>Demo data.</strong> This build ships with a sample dataset (fictional prices, generated 14-day trend) so the tracking, sorting and "cheapest retailer" logic can be tried end-to-end. Wire <code>PERFUMES</code> in <code>index.html</code> up to a real price feed (retailer APIs or a scheduled scraper) to make it live — see the comment at the top of the script.
+  </div>
+
+  <div class="stats">
+    <div class="stat drops">
+      <div class="num" id="statDrops">–</div>
+      <div class="label">Price drops</div>
+    </div>
+    <div class="stat hikes">
+      <div class="num" id="statHikes">–</div>
+      <div class="label">Price hikes</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="statBiggestDrop">–</div>
+      <div class="label">Biggest drop</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="statBiggestHike">–</div>
+      <div class="label">Biggest hike</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input type="search" id="searchBox" placeholder="Search by perfume or brand…">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="drop">📉 Drops</button>
+    <button class="filter-btn" data-filter="hike">📈 Hikes</button>
+    <button class="filter-btn" data-filter="flat">No change</button>
+    <select id="sortSelect">
+      <option value="biggestDrop">Sort: Biggest drop first</option>
+      <option value="biggestHike">Sort: Biggest hike first</option>
+      <option value="priceLow">Sort: Price low → high</option>
+      <option value="priceHigh">Sort: Price high → low</option>
+      <option value="name">Sort: Name A → Z</option>
+    </select>
+  </div>
+
+  <div class="list" id="list"></div>
+  <div class="empty" id="emptyState" style="display:none;">No perfumes match your search/filter.</div>
+
+  <footer>
+    Prices shown are illustrative sample data, not live prices. Last refreshed: <span id="lastRefreshed"></span>
+  </footer>
+</main>
+
+<script>
+/*
+ * ---------------------------------------------------------------------
+ * DATA SOURCE
+ * ---------------------------------------------------------------------
+ * PERFUMES below is sample/demo data: each perfume lists what a handful
+ * of retailers charge today, plus a 14-day history of the cheapest price
+ * found across retailers (oldest -> newest).
+ *
+ * To make this live:
+ *   1. Replace this array with data fetched from real retailer price
+ *      feeds/APIs, or a scraper you run on a schedule (e.g. daily cron).
+ *   2. Keep the same shape: { id, name, brand, size, retailers: [...],
+ *      history: [...] }. Append today's cheapest price to `history`
+ *      each time you refresh, and update `retailers` with fresh prices.
+ *   3. Everything below (stats, sorting, filtering, "cheapest at")
+ *      recomputes automatically from this array — no other changes
+ *      needed.
+ * ---------------------------------------------------------------------
+ */
+const PERFUMES = [
+  {
+    id: "bleu-de-chanel",
+    name: "Bleu de Chanel EDP",
+    brand: "Chanel",
+    size: "100ml",
+    retailers: [
+      { name: "Sephora", price: 138.00, url: "#" },
+      { name: "Nordstrom", price: 145.00, url: "#" },
+      { name: "FragranceNet", price: 119.99, url: "#" },
+      { name: "Ulta", price: 142.00, url: "#" },
+    ],
+    history: [134, 134, 136, 136, 138, 139, 140, 138, 136, 130, 125, 122, 120, 119.99],
+  },
+  {
+    id: "sauvage-edp",
+    name: "Sauvage EDP",
+    brand: "Dior",
+    size: "100ml",
+    retailers: [
+      { name: "Sephora", price: 145.00, url: "#" },
+      { name: "Macy's", price: 148.00, url: "#" },
+      { name: "FragranceX", price: 129.99, url: "#" },
+      { name: "Amazon", price: 133.50, url: "#" },
+    ],
+    history: [128, 128, 128, 129, 129, 130, 130, 131, 131, 130, 130, 130, 129.99, 129.99],
+  },
+  {
+    id: "baccarat-rouge-540",
+    name: "Baccarat Rouge 540 EDP",
+    brand: "Maison Francis Kurkdjian",
+    size: "70ml",
+    retailers: [
+      { name: "Nordstrom", price: 325.00, url: "#" },
+      { name: "Sephora", price: 325.00, url: "#" },
+      { name: "Neiman Marcus", price: 330.00, url: "#" },
+    ],
+    history: [310, 310, 312, 312, 312, 315, 315, 318, 318, 320, 322, 324, 325, 325],
+  },
+  {
+    id: "aventus",
+    name: "Aventus",
+    brand: "Creed",
+    size: "100ml",
+    retailers: [
+      { name: "Creed.com", price: 445.00, url: "#" },
+      { name: "Nordstrom", price: 460.00, url: "#" },
+      { name: "FragranceNet", price: 399.99, url: "#" },
+    ],
+    history: [420, 420, 422, 425, 425, 428, 430, 425, 415, 410, 405, 402, 400, 399.99],
+  },
+  {
+    id: "black-opium",
+    name: "Black Opium EDP",
+    brand: "Yves Saint Laurent",
+    size: "90ml",
+    retailers: [
+      { name: "Ulta", price: 132.00, url: "#" },
+      { name: "Sephora", price: 132.00, url: "#" },
+      { name: "FragranceNet", price: 108.99, url: "#" },
+      { name: "Amazon", price: 118.00, url: "#" },
+    ],
+    history: [108, 108, 108, 109, 109, 108, 108, 108.5, 108.5, 108.9, 108.9, 108.99, 108.99, 108.99],
+  },
+  {
+    id: "good-girl",
+    name: "Good Girl EDP",
+    brand: "Carolina Herrera",
+    size: "80ml",
+    retailers: [
+      { name: "Macy's", price: 142.00, url: "#" },
+      { name: "Ulta", price: 142.00, url: "#" },
+      { name: "FragranceX", price: 116.99, url: "#" },
+    ],
+    history: [140, 140, 138, 138, 136, 134, 130, 128, 124, 122, 120, 118, 117, 116.99],
+  },
+  {
+    id: "la-vie-est-belle",
+    name: "La Vie Est Belle EDP",
+    brand: "Lancôme",
+    size: "100ml",
+    retailers: [
+      { name: "Sephora", price: 142.00, url: "#" },
+      { name: "Macy's", price: 142.00, url: "#" },
+      { name: "Amazon", price: 121.30, url: "#" },
+    ],
+    history: [121, 121, 121, 121.30, 121.30, 121.30, 121.30, 121.30, 121.30, 121.30, 121.30, 121.30, 121.30, 121.30],
+  },
+  {
+    id: "light-blue",
+    name: "Light Blue EDT",
+    brand: "Dolce & Gabbana",
+    size: "100ml",
+    retailers: [
+      { name: "Ulta", price: 108.00, url: "#" },
+      { name: "FragranceNet", price: 74.99, url: "#" },
+      { name: "Amazon", price: 82.00, url: "#" },
+    ],
+    history: [74, 74, 74, 74.5, 74.5, 74.5, 74.5, 74.99, 74.99, 74.99, 74.99, 74.99, 74.99, 74.99],
+  },
+  {
+    id: "acqua-di-gio",
+    name: "Acqua di Giò EDT",
+    brand: "Giorgio Armani",
+    size: "100ml",
+    retailers: [
+      { name: "Sephora", price: 118.00, url: "#" },
+      { name: "Ulta", price: 118.00, url: "#" },
+      { name: "FragranceX", price: 89.99, url: "#" },
+    ],
+    history: [90, 90, 89, 89, 89, 88.5, 88.5, 88.5, 89, 89, 89.5, 89.5, 89.99, 89.99],
+  },
+  {
+    id: "coco-mademoiselle",
+    name: "Coco Mademoiselle EDP",
+    brand: "Chanel",
+    size: "100ml",
+    retailers: [
+      { name: "Nordstrom", price: 168.00, url: "#" },
+      { name: "Sephora", price: 168.00, url: "#" },
+      { name: "FragranceNet", price: 149.99, url: "#" },
+    ],
+    history: [149, 149, 149, 149, 149.5, 149.5, 149.5, 149.99, 149.99, 149.99, 149.99, 149.99, 149.99, 149.99],
+  },
+  {
+    id: "oud-wood",
+    name: "Oud Wood EDP",
+    brand: "Tom Ford",
+    size: "50ml",
+    retailers: [
+      { name: "Nordstrom", price: 262.00, url: "#" },
+      { name: "Sephora", price: 262.00, url: "#" },
+      { name: "Neiman Marcus", price: 268.00, url: "#" },
+    ],
+    history: [250, 250, 252, 252, 254, 256, 256, 258, 258, 260, 260, 260, 262, 262],
+  },
+  {
+    id: "gucci-bloom",
+    name: "Bloom EDP",
+    brand: "Gucci",
+    size: "100ml",
+    retailers: [
+      { name: "Ulta", price: 148.00, url: "#" },
+      { name: "Macy's", price: 148.00, url: "#" },
+      { name: "FragranceNet", price: 112.99, url: "#" },
+    ],
+    history: [130, 128, 126, 124, 122, 120, 118, 116, 115, 114, 113.5, 113, 112.99, 112.99],
+  },
+  {
+    id: "versace-eros",
+    name: "Eros EDT",
+    brand: "Versace",
+    size: "100ml",
+    retailers: [
+      { name: "Macy's", price: 105.00, url: "#" },
+      { name: "Ulta", price: 105.00, url: "#" },
+      { name: "Amazon", price: 71.20, url: "#" },
+    ],
+    history: [71, 71, 71, 71.20, 71.20, 71.20, 71.20, 71.20, 71.20, 71.20, 71.20, 71.20, 71.20, 71.20],
+  },
+  {
+    id: "wood-sage-sea-salt",
+    name: "Wood Sage & Sea Salt Cologne",
+    brand: "Jo Malone",
+    size: "100ml",
+    retailers: [
+      { name: "Nordstrom", price: 172.00, url: "#" },
+      { name: "Sephora", price: 172.00, url: "#" },
+    ],
+    history: [160, 160, 162, 162, 164, 165, 166, 167, 168, 169, 170, 170, 171, 172],
+  },
+];
+
+function cheapest(retailers) {
+  return retailers.reduce((best, r) => (r.price < best.price ? r : best), retailers[0]);
+}
+
+function computed(p) {
+  const best = cheapest(p.retailers);
+  const prev = p.history[p.history.length - 2];
+  const curr = p.history[p.history.length - 1];
+  const delta = curr - prev;
+  const pct = prev ? (delta / prev) * 100 : 0;
+  let trend = "flat";
+  if (pct <= -0.5) trend = "drop";
+  else if (pct >= 0.5) trend = "hike";
+  return { ...p, best, delta, pct, trend, curr };
+}
+
+const DATA = PERFUMES.map(computed);
+
+function fmt(n) {
+  return "$" + n.toFixed(2);
+}
+
+function sparkline(history) {
+  const w = 90, h = 28, pad = 3;
+  const min = Math.min(...history), max = Math.max(...history);
+  const range = max - min || 1;
+  const step = (w - pad * 2) / (history.length - 1);
+  const points = history
+    .map((v, i) => {
+      const x = pad + i * step;
+      const y = h - pad - ((v - min) / range) * (h - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  const last = history[history.length - 1];
+  const first = history[0];
+  const color = last < first ? "var(--drop)" : last > first ? "var(--hike)" : "var(--flat)";
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function badge(item) {
+  if (item.trend === "drop") return `<span class="badge drop">▼ ${Math.abs(item.pct).toFixed(1)}%</span>`;
+  if (item.trend === "hike") return `<span class="badge hike">▲ ${item.pct.toFixed(1)}%</span>`;
+  return `<span class="badge flat">– flat</span>`;
+}
+
+function retailerRows(item) {
+  const sorted = [...item.retailers].sort((a, b) => a.price - b.price);
+  const bestPrice = sorted[0].price;
+  return sorted
+    .map(
+      (r) => `<tr class="${r.price === bestPrice ? "best" : ""}">
+        <td><a href="${r.url}" target="_blank" rel="noopener">${r.name}</a></td>
+        <td>${fmt(r.price)}</td>
+      </tr>`
+    )
+    .join("");
+}
+
+function render() {
+  const q = document.getElementById("searchBox").value.trim().toLowerCase();
+  const filter = document.querySelector(".filter-btn.active").dataset.filter;
+  const sortBy = document.getElementById("sortSelect").value;
+
+  let items = DATA.filter((p) => {
+    const matchesQuery = !q || p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q);
+    const matchesFilter = filter === "all" || p.trend === filter;
+    return matchesQuery && matchesFilter;
+  });
+
+  items.sort((a, b) => {
+    switch (sortBy) {
+      case "biggestDrop": return a.pct - b.pct;
+      case "biggestHike": return b.pct - a.pct;
+      case "priceLow": return a.best.price - b.best.price;
+      case "priceHigh": return b.best.price - a.best.price;
+      case "name": return a.name.localeCompare(b.name);
+      default: return 0;
+    }
+  });
+
+  const list = document.getElementById("list");
+  const empty = document.getElementById("emptyState");
+  list.innerHTML = "";
+  empty.style.display = items.length ? "none" : "block";
+
+  items.forEach((item) => {
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div class="item-top">
+        <div class="item-main">
+          <h3>${item.name}</h3>
+          <div class="meta">${item.brand} · ${item.size}</div>
+        </div>
+        <div class="item-right">
+          ${sparkline(item.history)}
+          ${badge(item)}
+          <div class="price-block">
+            <div class="price">${fmt(item.best.price)}</div>
+            <div class="best-at">at ${item.best.name}</div>
+          </div>
+          <div class="caret">▶</div>
+        </div>
+      </div>
+      <div class="retailers">
+        <table class="retailer-table">
+          <thead><tr><th>Retailer</th><th>Price</th></tr></thead>
+          <tbody>${retailerRows(item)}</tbody>
+        </table>
+      </div>
+    `;
+    el.querySelector(".item-top").addEventListener("click", () => {
+      el.classList.toggle("open");
+    });
+    list.appendChild(el);
+  });
+}
+
+function renderStats() {
+  const drops = DATA.filter((p) => p.trend === "drop");
+  const hikes = DATA.filter((p) => p.trend === "hike");
+  document.getElementById("statDrops").textContent = drops.length;
+  document.getElementById("statHikes").textContent = hikes.length;
+
+  const biggestDrop = drops.sort((a, b) => a.pct - b.pct)[0];
+  const biggestHike = hikes.sort((a, b) => b.pct - a.pct)[0];
+
+  document.getElementById("statBiggestDrop").textContent = biggestDrop
+    ? `${biggestDrop.name.split(" ").slice(0, 2).join(" ")} (${biggestDrop.pct.toFixed(1)}%)`
+    : "—";
+  document.getElementById("statBiggestHike").textContent = biggestHike
+    ? `${biggestHike.name.split(" ").slice(0, 2).join(" ")} (+${biggestHike.pct.toFixed(1)}%)`
+    : "—";
+}
+
+document.getElementById("searchBox").addEventListener("input", render);
+document.getElementById("sortSelect").addEventListener("change", render);
+document.querySelectorAll(".filter-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelector(".filter-btn.active").classList.remove("active");
+    btn.classList.add("active");
+    render();
+  });
+});
+
+document.getElementById("lastRefreshed").textContent = new Date().toLocaleDateString(undefined, {
+  year: "numeric", month: "long", day: "numeric",
+});
+
+renderStats();
+render();
+</script>
+</body>
+</html>
