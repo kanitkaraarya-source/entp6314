@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Planner</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #1c1a17;
+    --muted: #8a8175;
+    --card-bg: #ffffff;
+    --card-border: #ddd6c8;
+    --accent: #2dd4bf;
+    --danger: #d64545;
+    --ok: #2e9e5b;
+    --team-marketing: #d64ba0;
+    --team-finance: #2e9e5b;
+    --team-outreach: #4a7fd6;
+    --team-logistics: #d68f2e;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  main {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    margin: 0 0 4px;
+  }
+
+  p.lead {
+    color: var(--muted);
+    margin: 0 0 24px;
+  }
+
+  h2.section {
+    font-size: 1.1rem;
+    margin: 32px 0 12px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  form#eventForm {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  form#eventForm .full { grid-column: 1 / -1; }
+
+  form#eventForm label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  form#eventForm input,
+  form#eventForm textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+  }
+
+  form#eventForm textarea {
+    min-height: 80px;
+    resize: vertical;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #06302b;
+  }
+
+  button:hover { opacity: 0.85; }
+
+  .full.actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  #formError {
+    color: var(--danger);
+    font-size: 0.85rem;
+    display: none;
+    grid-column: 1 / -1;
+  }
+
+  details.aiSettings {
+    grid-column: 1 / -1;
+    border-top: 1px dashed var(--card-border);
+    padding-top: 12px;
+    margin-top: 4px;
+  }
+
+  details.aiSettings summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  details.aiSettings .aiBody {
+    margin-top: 10px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .warning {
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: #f7f2e6;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+
+  .teamGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 720px) {
+    form#eventForm, .teamGrid { grid-template-columns: 1fr; }
+  }
+
+  .teamCard {
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card-bg);
+  }
+
+  .teamCard .teamHeader {
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #fff;
+  }
+
+  .teamCard ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .teamCard li {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.88rem;
+  }
+
+  .teamCard li:last-child { border-bottom: none; }
+
+  .teamCard li.done .taskTitle {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  .taskTitle { flex: 1; }
+
+  .taskDue {
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .taskRemove {
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0 2px;
+  }
+
+  .addTaskRow {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  .addTaskRow input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    font-size: 0.82rem;
+  }
+
+  .addTaskRow button {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+  }
+
+  .gantt {
+    margin-top: 12px;
+    overflow-x: auto;
+  }
+
+  .ganttRow {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    align-items: center;
+    min-height: 30px;
+  }
+
+  .ganttRow .ganttLabel {
+    font-size: 0.78rem;
+    padding-right: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ganttTrack {
+    position: relative;
+    height: 20px;
+    background: #f2eee2;
+    border-radius: 4px;
+    min-width: 480px;
+  }
+
+  .ganttBar {
+    position: absolute;
+    top: 3px;
+    height: 14px;
+    border-radius: 4px;
+    min-width: 6px;
+  }
+
+  .ganttMarker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--danger);
+  }
+
+  .ganttHeader {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    margin-bottom: 6px;
+  }
+
+  .ganttHeader .ganttTrack {
+    background: none;
+    min-width: 480px;
+  }
+
+  .ganttHeader .ganttTick {
+    position: absolute;
+    top: 0;
+    font-size: 0.68rem;
+    color: var(--muted);
+    transform: translateX(-50%);
+  }
+
+  .ganttLegend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .ganttLegend span.swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: -1px;
+  }
+
+  .posterControls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .posterControls select {
+    padding: 8px 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    font-family: inherit;
+  }
+
+  #posterCanvas {
+    max-width: 100%;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    display: block;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 16px;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Event Planner</h1>
+  <p class="lead">Describe the event once — get a task list split across teams, a timeline, and a poster.</p>
+
+  <div class="card">
+    <form id="eventForm" novalidate>
+      <div class="full">
+        <label for="nameInput">Event name</label>
+        <input type="text" id="nameInput" placeholder="e.g. Fall Welcome Mixer">
+      </div>
+      <div class="full">
+        <label for="descInput">Event description</label>
+        <textarea id="descInput" placeholder="What's happening, who's it for, anything notable (guest speaker, catering, outdoor venue, fundraiser, etc.)"></textarea>
+      </div>
+      <div>
+        <label for="dateInput">Event date</label>
+        <input type="date" id="dateInput">
+      </div>
+      <div>
+        <label for="timeInput">Event time</label>
+        <input type="time" id="timeInput">
+      </div>
+      <div>
+        <label for="venueInput">Venue</label>
+        <input type="text" id="venueInput" placeholder="e.g. Student Union Ballroom">
+      </div>
+      <div>
+        <label for="leaderInput">Event leader</label>
+        <input type="text" id="leaderInput" placeholder="e.g. Jordan Lee">
+      </div>
+
+      <details class="aiSettings">
+        <summary>AI settings (optional)</summary>
+        <div class="aiBody">
+          <div class="warning">
+            Paste an Anthropic API key to have Claude generate the task list from your description. The key is stored only in this browser's local storage and is sent directly from your browser to Anthropic's API — fine for personal/class use, not for a shared or production deployment. Leave blank to use the built-in template generator instead (no key needed).
+          </div>
+          <input type="password" id="apiKeyInput" placeholder="sk-ant-... (optional)">
+        </div>
+      </details>
+
+      <p id="formError"></p>
+
+      <div class="full actions">
+        <button type="submit" class="primary" id="generateBtn">Generate plan</button>
+        <button type="button" id="resetBtn">Reset</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="planSection" style="display:none;">
+    <h2 class="section">Task list</h2>
+    <div class="teamGrid" id="teamGrid"></div>
+
+    <h2 class="section">Timeline</h2>
+    <div class="card gantt" id="ganttSection"></div>
+
+    <h2 class="section">Poster</h2>
+    <div class="card">
+      <div class="posterControls">
+        <label for="themeSelect" style="font-size:0.85rem; color:var(--muted);">Theme</label>
+        <select id="themeSelect">
+          <option value="teal">Teal</option>
+          <option value="warm">Warm</option>
+          <option value="midnight">Midnight</option>
+        </select>
+        <button id="downloadPosterBtn">Download poster (PNG)</button>
+      </div>
+      <canvas id="posterCanvas" width="800" height="1000"></canvas>
+    </div>
+  </div>
+
+  <div class="empty" id="emptyState">No plan yet. Fill in the event details above and generate one.</div>
+</main>
+
+<script>
+  const STORAGE_KEY = 'eventPlanner.plan';
+  const API_KEY_STORAGE = 'eventPlanner.apiKey';
+
+  const TEAMS = ['Marketing & Social Media', 'Finance', 'Outreach', 'Logistics & Events'];
+  const TEAM_COLORS = {
+    'Marketing & Social Media': 'var(--team-marketing)',
+    'Finance': 'var(--team-finance)',
+    'Outreach': 'var(--team-outreach)',
+    'Logistics & Events': 'var(--team-logistics)'
+  };
+  const TEAM_HEX = {
+    'Marketing & Social Media': '#d64ba0',
+    'Finance': '#2e9e5b',
+    'Outreach': '#4a7fd6',
+    'Logistics & Events': '#d68f2e'
+  };
+
+  const TASK_TEMPLATES = {
+    'Marketing & Social Media': [
+      { title: 'Design event poster / promo graphics', offset: 18 },
+      { title: 'Write event description for social posts', offset: 16 },
+      { title: 'Schedule announcement posts', offset: 14 },
+      { title: 'Send save-the-date email blast', offset: 12 },
+      { title: 'Post event on campus calendar / listservs', offset: 10 },
+      { title: 'Hang flyers around campus', offset: 7 },
+      { title: 'Post day-of reminder', offset: 1 },
+      { title: 'Share event recap / photos', offset: -2 }
+    ],
+    'Finance': [
+      { title: 'Draft event budget', offset: 20 },
+      { title: 'Request funding / submit budget approval', offset: 17 },
+      { title: 'Collect vendor quotes', offset: 14 },
+      { title: 'Process payments / deposits to vendors', offset: 7 },
+      { title: 'Track final expenses', offset: 1 },
+      { title: 'Reconcile budget and file reimbursements', offset: -5 }
+    ],
+    'Outreach': [
+      { title: 'Identify and invite guests / partners', offset: 19 },
+      { title: 'Reach out to sponsors / co-sponsoring clubs', offset: 16 },
+      { title: 'Confirm RSVPs from key guests', offset: 10 },
+      { title: 'Send reminder to invited guests', offset: 3 },
+      { title: 'Send thank-you follow-ups', offset: -3 }
+    ],
+    'Logistics & Events': [
+      { title: 'Book venue and confirm room setup', offset: 21 },
+      { title: 'Arrange AV / sound equipment', offset: 14 },
+      { title: 'Plan floor layout and signage', offset: 10 },
+      { title: 'Recruit and brief day-of volunteers', offset: 7 },
+      { title: 'Confirm final headcount with venue', offset: 2 },
+      { title: 'Set up venue day-of', offset: 0 },
+      { title: 'Oversee teardown', offset: 0 }
+    ]
+  };
+
+  const KEYWORD_EXTRAS = [
+    { keywords: ['fundrais', 'donat'], team: 'Finance', title: 'Set up donation collection method', offset: 10 },
+    { keywords: ['speaker', 'panel', 'keynote'], team: 'Outreach', title: 'Confirm speaker logistics (travel, intro bio)', offset: 8 },
+    { keywords: ['food', 'cater', 'snack', 'dinner', 'lunch'], team: 'Logistics & Events', title: 'Arrange catering', offset: 6 },
+    { keywords: ['outdoor', 'outside', 'park', 'quad'], team: 'Logistics & Events', title: 'Arrange weather contingency plan', offset: 5 },
+    { keywords: ['workshop', 'training', 'tutorial'], team: 'Marketing & Social Media', title: 'Promote registration for the workshop', offset: 9 },
+    { keywords: ['ticket', 'rsvp', 'sign up', 'sign-up'], team: 'Outreach', title: 'Set up ticketing / RSVP form', offset: 15 }
+  ];
+
+  function todayDate() {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function parseDate(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    return d;
+  }
+
+  function toISODate(d) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  function addDays(d, n) {
+    const r = new Date(d);
+    r.setDate(r.getDate() + n);
+    return r;
+  }
+
+  function diffDays(a, b) {
+    return Math.round((b - a) / (1000 * 60 * 60 * 24));
+  }
+
+  function uid() {
+    return crypto.randomUUID();
+  }
+
+  function generateTasksRuleBased(event) {
+    const today = todayDate();
+    const eventDate = parseDate(event.date);
+    const daysUntil = diffDays(today, eventDate);
+    const scale = daysUntil > 0 ? Math.min(1, daysUntil / 21) : 0.15;
+    const descLower = (event.description || '').toLowerCase();
+
+    const templatesByTeam = {};
+    TEAMS.forEach(t => { templatesByTeam[t] = [...TASK_TEMPLATES[t]]; });
+    KEYWORD_EXTRAS.forEach(extra => {
+      if (extra.keywords.some(k => descLower.includes(k))) {
+        templatesByTeam[extra.team].push({ title: extra.title, offset: extra.offset });
+      }
+    });
+
+    const tasks = [];
+    TEAMS.forEach(team => {
+      templatesByTeam[team].forEach(tmpl => {
+        let due;
+        if (tmpl.offset >= 0) {
+          const scaledOffset = Math.round(tmpl.offset * scale);
+          due = addDays(eventDate, -scaledOffset);
+          if (due < today) due = today;
+        } else {
+          due = addDays(eventDate, -tmpl.offset);
+        }
+        tasks.push({ id: uid(), team, title: tmpl.title, dueDate: toISODate(due), done: false });
+      });
+    });
+    return tasks;
+  }
+
+  async function generateTasksWithAI(event, apiKey) {
+    const prompt = `You are planning a student club event. Event name: "${event.name}". ` +
+      `Description: "${event.description}". Event date: ${event.date}. Venue: ${event.venue}. Event leader: ${event.leader}. ` +
+      `Today's date: ${toISODate(todayDate())}.\n\n` +
+      `Produce a task list to prepare for this event, split across exactly these four teams: ` +
+      `"Marketing & Social Media", "Finance", "Outreach", "Logistics & Events". ` +
+      `Give each team 4-8 concrete tasks with a due date on or before the event date (or shortly after, for wrap-up tasks). ` +
+      `Respond with ONLY a JSON array, no prose, no markdown fences, in this exact shape: ` +
+      `[{"team": "Finance", "title": "Draft event budget", "dueDate": "YYYY-MM-DD"}, ...]`;
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-5',
+        max_tokens: 1500,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!resp.ok) throw new Error('AI request failed: ' + resp.status);
+    const data = await resp.json();
+    const text = (data.content || []).map(b => b.text || '').join('');
+    const jsonStart = text.indexOf('[');
+    const jsonEnd = text.lastIndexOf(']');
+    if (jsonStart === -1 || jsonEnd === -1) throw new Error('Could not parse AI response');
+    const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+
+    const tasks = parsed
+      .filter(t => TEAMS.includes(t.team) && t.title && t.dueDate)
+      .map(t => ({ id: uid(), team: t.team, title: String(t.title), dueDate: t.dueDate, done: false }));
+
+    if (tasks.length === 0) throw new Error('AI response had no usable tasks');
+    return tasks;
+  }
+
+  function loadPlan() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      console.error('Failed to load plan from storage', e);
+      return null;
+    }
+  }
+
+  function savePlan(plan) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(plan));
+  }
+
+  let plan = loadPlan();
+
+  const teamGrid = document.getElementById('teamGrid');
+  const ganttSection = document.getElementById('ganttSection');
+  const planSection = document.getElementById('planSection');
+  const emptyState = document.getElementById('emptyState');
+  const posterCanvas = document.getElementById('posterCanvas');
+  const themeSelect = document.getElementById('themeSelect');
+  const formError = document.getElementById('formError');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+
+  const THEMES = {
+    teal: { bg1: '#0f2f2b', bg2: '#134e4a', accent: '#2dd4bf', text: '#f4f1ea' },
+    warm: { bg1: '#4a1f1f', bg2: '#7a2e2e', accent: '#f3a13a', text: '#fff7ec' },
+    midnight: { bg1: '#0b1030', bg2: '#1b2560', accent: '#8ab4ff', text: '#eef1ff' }
+  };
+
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(' ');
+    let line = '';
+    const lines = [];
+    words.forEach(word => {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    });
+    if (line) lines.push(line);
+    lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineHeight));
+    return lines.length * lineHeight;
+  }
+
+  function drawPoster() {
+    if (!plan) return;
+    const theme = THEMES[themeSelect.value] || THEMES.teal;
+    const ctx = posterCanvas.getContext('2d');
+    const w = posterCanvas.width, h = posterCanvas.height;
+
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, theme.bg1);
+    grad.addColorStop(1, theme.bg2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = theme.accent;
+    ctx.globalAlpha = 0.15;
+    ctx.beginPath();
+    ctx.arc(w * 0.85, h * 0.12, 180, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(w * 0.1, h * 0.9, 140, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = theme.accent;
+    ctx.fillRect(60, 60, 60, 6);
+
+    ctx.fillStyle = theme.text;
+    ctx.textBaseline = 'top';
+    ctx.font = '700 54px -apple-system, Segoe UI, Roboto, sans-serif';
+    const nameHeight = wrapText(ctx, plan.event.name || 'Untitled Event', 60, 100, w - 120, 60);
+
+    let y = 100 + nameHeight + 40;
+    ctx.fillStyle = theme.accent;
+    ctx.fillRect(60, y, w - 120, 2);
+    y += 30;
+
+    ctx.font = '600 30px -apple-system, Segoe UI, Roboto, sans-serif';
+    ctx.fillStyle = theme.text;
+    const dateStr = plan.event.date ? new Date(plan.event.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '';
+    const timeStr = plan.event.time || '';
+    ctx.fillText(dateStr + (timeStr ? '  ·  ' + timeStr : ''), 60, y);
+    y += 46;
+
+    ctx.font = '400 26px -apple-system, Segoe UI, Roboto, sans-serif';
+    ctx.fillText(plan.event.venue || '', 60, y);
+    y += 40;
+
+    if (plan.event.leader) {
+      ctx.font = '400 22px -apple-system, Segoe UI, Roboto, sans-serif';
+      ctx.fillStyle = theme.accent;
+      ctx.fillText('Hosted by ' + plan.event.leader, 60, y);
+    }
+  }
+
+  function renderTeamCard(team, teamTasks) {
+    const card = document.createElement('div');
+    card.className = 'teamCard';
+
+    const header = document.createElement('div');
+    header.className = 'teamHeader';
+    header.style.background = TEAM_HEX[team];
+    header.textContent = team;
+    card.appendChild(header);
+
+    const ul = document.createElement('ul');
+    teamTasks
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+      .forEach(task => {
+        const li = document.createElement('li');
+        if (task.done) li.classList.add('done');
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = task.done;
+        checkbox.addEventListener('change', () => toggleTaskDone(task.id));
+
+        const title = document.createElement('span');
+        title.className = 'taskTitle';
+        title.textContent = task.title;
+
+        const due = document.createElement('span');
+        due.className = 'taskDue';
+        due.textContent = task.dueDate;
+
+        const remove = document.createElement('button');
+        remove.className = 'taskRemove';
+        remove.textContent = '✕';
+        remove.title = 'Remove task';
+        remove.addEventListener('click', () => removeTask(task.id));
+
+        li.appendChild(checkbox);
+        li.appendChild(title);
+        li.appendChild(due);
+        li.appendChild(remove);
+        ul.appendChild(li);
+      });
+    card.appendChild(ul);
+
+    const addRow = document.createElement('div');
+    addRow.className = 'addTaskRow';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Add a task…';
+    const addBtn = document.createElement('button');
+    addBtn.textContent = 'Add';
+    addBtn.addEventListener('click', () => {
+      const title = input.value.trim();
+      if (!title) return;
+      addTask(team, title);
+      input.value = '';
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
+    });
+    addRow.appendChild(input);
+    addRow.appendChild(addBtn);
+    card.appendChild(addRow);
+
+    return card;
+  }
+
+  function renderGantt() {
+    ganttSection.innerHTML = '';
+    if (!plan || plan.tasks.length === 0) return;
+
+    const today = todayDate();
+    const eventDate = parseDate(plan.event.date);
+    const dueDates = plan.tasks.map(t => parseDate(t.dueDate));
+    const rangeStart = new Date(Math.min(today, ...dueDates));
+    const rangeEnd = new Date(Math.max(eventDate.getTime(), ...dueDates.map(d => d.getTime())));
+    const totalMs = Math.max(1, rangeEnd - rangeStart);
+
+    const pct = d => ((d - rangeStart) / totalMs) * 100;
+
+    const header = document.createElement('div');
+    header.className = 'ganttHeader';
+    const spacer = document.createElement('div');
+    header.appendChild(spacer);
+    const headerTrack = document.createElement('div');
+    headerTrack.className = 'ganttTrack';
+    headerTrack.style.height = '16px';
+    const tickCount = 5;
+    for (let i = 0; i <= tickCount; i++) {
+      const d = new Date(rangeStart.getTime() + (totalMs * i) / tickCount);
+      const tick = document.createElement('div');
+      tick.className = 'ganttTick';
+      tick.style.left = pct(d) + '%';
+      tick.textContent = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      headerTrack.appendChild(tick);
+    }
+    header.appendChild(headerTrack);
+    ganttSection.appendChild(header);
+
+    const sorted = [...plan.tasks].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    sorted.forEach(task => {
+      const row = document.createElement('div');
+      row.className = 'ganttRow';
+
+      const label = document.createElement('div');
+      label.className = 'ganttLabel';
+      label.textContent = task.title;
+      row.appendChild(label);
+
+      const track = document.createElement('div');
+      track.className = 'ganttTrack';
+
+      const due = parseDate(task.dueDate);
+      let barStart = addDays(due, -4);
+      if (barStart < rangeStart) barStart = rangeStart;
+      if (barStart > due) barStart = due;
+
+      const left = pct(barStart);
+      const width = Math.max(1.5, pct(due) - pct(barStart));
+
+      const bar = document.createElement('div');
+      bar.className = 'ganttBar';
+      bar.style.left = left + '%';
+      bar.style.width = width + '%';
+      bar.style.background = TEAM_HEX[task.team];
+      bar.title = task.team + ': ' + task.title + ' (due ' + task.dueDate + ')';
+      if (task.done) bar.style.opacity = '0.35';
+      track.appendChild(bar);
+
+      const marker = document.createElement('div');
+      marker.className = 'ganttMarker';
+      marker.style.left = pct(eventDate) + '%';
+      marker.title = 'Event day';
+      track.appendChild(marker);
+
+      row.appendChild(track);
+      ganttSection.appendChild(row);
+    });
+
+    const legend = document.createElement('div');
+    legend.className = 'ganttLegend';
+    TEAMS.forEach(team => {
+      const item = document.createElement('span');
+      const swatch = document.createElement('span');
+      swatch.className = 'swatch';
+      swatch.style.background = TEAM_HEX[team];
+      item.appendChild(swatch);
+      item.appendChild(document.createTextNode(team));
+      legend.appendChild(item);
+    });
+    const eventItem = document.createElement('span');
+    const eventSwatch = document.createElement('span');
+    eventSwatch.className = 'swatch';
+    eventSwatch.style.background = 'var(--danger)';
+    eventItem.appendChild(eventSwatch);
+    eventItem.appendChild(document.createTextNode('Event day'));
+    legend.appendChild(eventItem);
+    ganttSection.appendChild(legend);
+  }
+
+  function render() {
+    if (!plan) {
+      planSection.style.display = 'none';
+      emptyState.style.display = 'block';
+      return;
+    }
+    planSection.style.display = 'block';
+    emptyState.style.display = 'none';
+
+    teamGrid.innerHTML = '';
+    TEAMS.forEach(team => {
+      const teamTasks = plan.tasks.filter(t => t.team === team);
+      teamGrid.appendChild(renderTeamCard(team, teamTasks));
+    });
+
+    renderGantt();
+    drawPoster();
+  }
+
+  function toggleTaskDone(id) {
+    const task = plan.tasks.find(t => t.id === id);
+    if (!task) return;
+    task.done = !task.done;
+    savePlan(plan);
+    render();
+  }
+
+  function removeTask(id) {
+    plan.tasks = plan.tasks.filter(t => t.id !== id);
+    savePlan(plan);
+    render();
+  }
+
+  function addTask(team, title) {
+    plan.tasks.push({ id: uid(), team, title, dueDate: plan.event.date, done: false });
+    savePlan(plan);
+    render();
+  }
+
+  document.getElementById('eventForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('nameInput').value.trim();
+    const description = document.getElementById('descInput').value.trim();
+    const date = document.getElementById('dateInput').value;
+    const time = document.getElementById('timeInput').value;
+    const venue = document.getElementById('venueInput').value.trim();
+    const leader = document.getElementById('leaderInput').value.trim();
+    const apiKey = apiKeyInput.value.trim();
+
+    if (!name) {
+      formError.textContent = 'Enter an event name.';
+      formError.style.display = 'block';
+      return;
+    }
+    if (!date) {
+      formError.textContent = 'Pick an event date.';
+      formError.style.display = 'block';
+      return;
+    }
+    formError.style.display = 'none';
+
+    const event = { name, description, date, time, venue, leader };
+    if (apiKey) localStorage.setItem(API_KEY_STORAGE, apiKey);
+
+    const generateBtn = document.getElementById('generateBtn');
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Generating…';
+
+    let tasks;
+    try {
+      if (apiKey) {
+        tasks = await generateTasksWithAI(event, apiKey);
+      } else {
+        tasks = generateTasksRuleBased(event);
+      }
+    } catch (err) {
+      console.error('AI generation failed, falling back to template generator', err);
+      tasks = generateTasksRuleBased(event);
+    }
+
+    plan = { event, tasks };
+    savePlan(plan);
+    render();
+
+    generateBtn.disabled = false;
+    generateBtn.textContent = 'Generate plan';
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    plan = null;
+    localStorage.removeItem(STORAGE_KEY);
+    document.getElementById('eventForm').reset();
+    render();
+  });
+
+  themeSelect.addEventListener('change', drawPoster);
+  document.getElementById('downloadPosterBtn').addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = (plan && plan.event.name ? plan.event.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() : 'event') + '-poster.png';
+    link.href = posterCanvas.toDataURL('image/png');
+    link.click();
+  });
+
+  const savedKey = localStorage.getItem(API_KEY_STORAGE);
+  if (savedKey) apiKeyInput.value = savedKey;
+
+  if (plan) {
+    document.getElementById('nameInput').value = plan.event.name || '';
+    document.getElementById('descInput').value = plan.event.description || '';
+    document.getElementById('dateInput').value = plan.event.date || '';
+    document.getElementById('timeInput').value = plan.event.time || '';
+    document.getElementById('venueInput').value = plan.event.venue || '';
+    document.getElementById('leaderInput').value = plan.event.leader || '';
+  }
+
+  render();
+</script>
+</body>
+</html>
