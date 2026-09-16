@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tip Splitter Demos</title>
+<title>Class Projects</title>
 <style>
   :root {
     --bg: #f4f1ea;
@@ -33,8 +33,16 @@
   }
 
   main {
-    max-width: 720px;
+    max-width: 760px;
     width: 100%;
+  }
+
+  h2.section {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 32px 0 12px;
   }
 
   h1 {
@@ -98,8 +106,20 @@
 </head>
 <body>
 <main>
-  <h1>Tip Splitter Demos</h1>
-  <p class="lead">Two versions of the same app, built from two different prompts.</p>
+  <h1>Class Projects</h1>
+  <p class="lead">Apps and demos built this term.</p>
+
+  <h2 class="section">Club Dues Tracker</h2>
+  <div class="cards">
+    <a class="card" href="/club-dues-tracker.html">
+      <span class="tag">Student Org Tool</span>
+      <h2>Club Dues Tracker</h2>
+      <p>Track member dues, collected vs. outstanding totals, and export a CSV for officer handoff.</p>
+    </a>
+  </div>
+
+  <h2 class="section">Tip Splitter Demos</h2>
+  <p class="lead" style="margin-bottom:16px;">Two versions of the same app, built from two different prompts.</p>
   <div class="cards">
     <a class="card" href="/Session2_BadPrompt/">
       <span class="tag">Bad Prompt</span>
@@ -110,6 +130,15 @@
       <span class="tag">Detailed Prompt</span>
       <h2>Tip Splitter — Detailed Prompt</h2>
       <p>Built from a detailed, well-specified prompt.</p>
+    </a>
+  </div>
+
+  <h2 class="section">Other</h2>
+  <div class="cards">
+    <a class="card" href="/snake-and-apple.html">
+      <span class="tag">Game</span>
+      <h2>Snake Break</h2>
+      <p>Snake, with screen wraparound and game-over roasts.</p>
     </a>
   </div>
 </main>

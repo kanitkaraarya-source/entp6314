@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Club Dues Tracker</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #1c1a17;
+    --muted: #8a8175;
+    --card-bg: #ffffff;
+    --card-border: #ddd6c8;
+    --accent: #2dd4bf;
+    --danger: #d64545;
+    --ok: #2e9e5b;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    margin: 0 0 4px;
+  }
+
+  p.lead {
+    color: var(--muted);
+    margin: 0 0 24px;
+  }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .stat .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .stat .value {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .stat.collected .value { color: var(--ok); }
+  .stat.outstanding .value { color: var(--danger); }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+
+  .toolbar input[type="text"] {
+    flex: 1;
+    min-width: 160px;
+    padding: 10px 12px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #06302b;
+  }
+
+  button:hover { opacity: 0.85; }
+
+  form#addForm {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr auto;
+    gap: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  form#addForm input {
+    padding: 10px 12px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--card-border);
+    font-size: 0.9rem;
+  }
+
+  th {
+    background: #efeade;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .badge.paid { background: #dff3e6; color: var(--ok); }
+  .badge.unpaid { background: #fbe4e4; color: var(--danger); }
+
+  td.actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  td.actions button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 16px;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Club Dues Tracker</h1>
+  <p class="lead">Track who's paid, who hasn't, and export the record when officers change.</p>
+
+  <div class="summary">
+    <div class="stat"><div class="label">Members</div><div class="value" id="statMembers">0</div></div>
+    <div class="stat collected"><div class="label">Collected</div><div class="value" id="statCollected">$0.00</div></div>
+    <div class="stat outstanding"><div class="label">Outstanding</div><div class="value" id="statOutstanding">$0.00</div></div>
+  </div>
+
+  <form id="addForm" novalidate>
+    <input type="text" id="nameInput" placeholder="Member name">
+    <input type="number" id="amountInput" placeholder="Dues amount" step="0.01">
+    <input type="date" id="dateInput">
+    <button type="submit" class="primary">Add member</button>
+  </form>
+  <p id="formError" style="color:var(--danger); font-size:0.85rem; margin:-12px 0 16px; display:none;"></p>
+
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Search members…">
+    <button id="exportBtn">Export CSV</button>
+  </div>
+
+  <table id="membersTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Date paid</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div class="empty" id="emptyState" style="display:none;">No members yet. Add one above.</div>
+</main>
+
+<script>
+  const STORAGE_KEY = 'clubDuesTracker.members';
+
+  function loadMembers() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.error('Failed to load members from storage', e);
+      return [];
+    }
+  }
+
+  function saveMembers(members) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(members));
+  }
+
+  let members = loadMembers();
+
+  const tableBody = document.getElementById('tableBody');
+  const emptyState = document.getElementById('emptyState');
+  const searchInput = document.getElementById('searchInput');
+  const statMembers = document.getElementById('statMembers');
+  const statCollected = document.getElementById('statCollected');
+  const statOutstanding = document.getElementById('statOutstanding');
+
+  function formatMoney(n) {
+    return '$' + n.toFixed(2);
+  }
+
+  function render() {
+    const query = searchInput.value.trim().toLowerCase();
+    const filtered = members.filter(m => m.name.toLowerCase().includes(query));
+
+    tableBody.innerHTML = '';
+    filtered.forEach(m => {
+      const tr = document.createElement('tr');
+
+      const nameTd = document.createElement('td');
+      nameTd.textContent = m.name;
+
+      const amountTd = document.createElement('td');
+      amountTd.textContent = formatMoney(m.amount);
+
+      const statusTd = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = 'badge ' + (m.paid ? 'paid' : 'unpaid');
+      badge.textContent = m.paid ? 'Paid' : 'Unpaid';
+      statusTd.appendChild(badge);
+
+      const dateTd = document.createElement('td');
+      dateTd.textContent = m.paid ? (m.datePaid || '—') : '—';
+
+      const actionsTd = document.createElement('td');
+      actionsTd.className = 'actions';
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.textContent = m.paid ? 'Mark unpaid' : 'Mark paid';
+      toggleBtn.addEventListener('click', () => togglePaid(m.id));
+
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => removeMember(m.id));
+
+      actionsTd.appendChild(toggleBtn);
+      actionsTd.appendChild(removeBtn);
+
+      tr.appendChild(nameTd);
+      tr.appendChild(amountTd);
+      tr.appendChild(statusTd);
+      tr.appendChild(dateTd);
+      tr.appendChild(actionsTd);
+      tableBody.appendChild(tr);
+    });
+
+    emptyState.style.display = filtered.length === 0 ? 'block' : 'none';
+
+    const collected = members.filter(m => m.paid).reduce((sum, m) => sum + m.amount, 0);
+    const outstanding = members.filter(m => !m.paid).reduce((sum, m) => sum + m.amount, 0);
+    statMembers.textContent = members.length;
+    statCollected.textContent = formatMoney(collected);
+    statOutstanding.textContent = formatMoney(outstanding);
+  }
+
+  function addMember(name, amount) {
+    members.push({
+      id: crypto.randomUUID(),
+      name,
+      amount,
+      paid: false,
+      datePaid: null
+    });
+    saveMembers(members);
+    render();
+  }
+
+  function togglePaid(id) {
+    const m = members.find(m => m.id === id);
+    if (!m) return;
+    m.paid = !m.paid;
+    m.datePaid = m.paid ? new Date().toISOString().slice(0, 10) : null;
+    saveMembers(members);
+    render();
+  }
+
+  function removeMember(id) {
+    members = members.filter(m => m.id !== id);
+    saveMembers(members);
+    render();
+  }
+
+  function exportCsv() {
+    const header = ['Name', 'Amount', 'Status', 'Date Paid'];
+    const rows = members.map(m => [
+      m.name,
+      m.amount.toFixed(2),
+      m.paid ? 'Paid' : 'Unpaid',
+      m.paid ? (m.datePaid || '') : ''
+    ]);
+    const csv = [header, ...rows]
+      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'club-dues-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  const formError = document.getElementById('formError');
+
+  document.getElementById('addForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nameInput = document.getElementById('nameInput');
+    const amountInput = document.getElementById('amountInput');
+    const name = nameInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+
+    if (!name) {
+      formError.textContent = 'Enter a member name.';
+      formError.style.display = 'block';
+      return;
+    }
+    if (Number.isNaN(amount) || amount < 0) {
+      formError.textContent = 'Dues amount must be a number of 0 or more.';
+      formError.style.display = 'block';
+      return;
+    }
+
+    formError.style.display = 'none';
+    addMember(name, amount);
+    nameInput.value = '';
+    amountInput.value = '';
+    nameInput.focus();
+  });
+
+  searchInput.addEventListener('input', render);
+  document.getElementById('exportBtn').addEventListener('click', exportCsv);
+
+  render();
+</script>
+</body>
+</html>
