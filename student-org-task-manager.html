@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Club Handoff — Student Org Task Manager</title>
+<style>
+  :root {
+    --bg: #f5f6fb;
+    --surface: #ffffff;
+    --ink: #1a1d29;
+    --muted: #6b7280;
+    --border: #e3e5ee;
+    --accent: #4f46e5;
+    --accent-ink: #ffffff;
+    --accent-light: #eef2ff;
+    --success: #16a34a;
+    --success-light: #ecfdf3;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.45;
+    padding-bottom: 60px;
+  }
+
+  a { color: var(--accent); }
+
+  header.top {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .top-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .brand-row h1 {
+    font-size: 1.3rem;
+    margin: 0;
+  }
+
+  .brand-row .subtitle {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .club-tag {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  nav.tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 14px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  nav.tabs button {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  nav.tabs button:hover { color: var(--ink); }
+
+  nav.tabs button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .tab-panel[hidden] { display: none; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .card h2 {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+  }
+
+  .card .hint {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin: 0 0 14px;
+  }
+
+  .grid {
+    display: grid;
+    gap: 14px;
+  }
+
+  .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+
+  @media (max-width: 760px) {
+    .grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid.cols-3 { grid-template-columns: 1fr; }
+    .grid.cols-2 { grid-template-columns: 1fr; }
+  }
+
+  .stat {
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+
+  .stat .num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .stat .label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .banner {
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 0.88rem;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .banner.warn { background: var(--warning-light); color: #92400e; border: 1px solid #fde68a; }
+  .banner.good { background: var(--success-light); color: #166534; border: 1px solid #bbf7d0; }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  input[type="text"], input[type="email"], input[type="date"], input[type="time"],
+  input[type="number"], select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  textarea { resize: vertical; min-height: 70px; }
+
+  .field { margin-bottom: 12px; }
+
+  form .row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  button, .btn {
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+
+  button:hover { border-color: var(--accent); color: var(--accent); }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  button.primary:hover { background: #4338ca; color: var(--accent-ink); }
+
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  button.small { padding: 4px 9px; font-size: 0.76rem; }
+
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  tr:last-child td { border-bottom: none; }
+
+  .pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+  .pill.role-active { background: var(--success-light); color: #166534; }
+  .pill.role-outgoing { background: var(--warning-light); color: #92400e; }
+  .pill.role-alumni { background: #f1f2f6; color: var(--muted); }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 760px) { .board { grid-template-columns: 1fr; } }
+
+  .column h3 {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    margin: 0 0 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .task-card.overdue { border-left-color: var(--danger); }
+  .task-card .title { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+  .task-card .meta { font-size: 0.76rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .task-card .meta span { background: #f1f2f6; padding: 1px 7px; border-radius: 999px; }
+  .task-card .cardactions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .task-card select { width: auto; font-size: 0.76rem; padding: 3px 6px; }
+
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filters > div { min-width: 150px; flex: 1; }
+
+  .empty-note { color: var(--muted); font-size: 0.85rem; font-style: italic; padding: 10px 0; }
+
+  .member-row, .finance-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .member-row:last-child, .finance-row:last-child { border-bottom: none; }
+  .member-row .name { font-weight: 600; }
+  .member-row .sub { font-size: 0.8rem; color: var(--muted); }
+
+  .output-block {
+    background: #0f1117;
+    color: #e5e7eb;
+    padding: 14px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    font-size: 0.85rem;
+    font-family: ui-monospace, Consolas, monospace;
+    margin: 10px 0;
+  }
+
+  .candidate {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #fafbfe;
+  }
+  .candidate .row { align-items: end; }
+  .candidate .rawline { font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+
+  .archive-entry summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 8px 0;
+  }
+
+  footer.note {
+    max-width: 1080px;
+    margin: 30px auto 0;
+    padding: 0 20px;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 50;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand-row">
+      <div>
+        <h1 id="clubNameHeading">Club Handoff</h1>
+        <div class="subtitle">A task manager built around the one thing every club officer eventually faces: handing it off.</div>
+      </div>
+      <div class="club-tag" id="clubYearTag"></div>
+    </div>
+    <nav class="tabs" id="tabNav">
+      <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="tasks">Tasks</button>
+      <button data-tab="roster">Roster</button>
+      <button data-tab="finances">Finances</button>
+      <button data-tab="notes">Notes → Tasks</button>
+      <button data-tab="flyer">Flyer &amp; Reminders</button>
+      <button data-tab="handoff">Handoff Packet</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <section class="tab-panel" data-tab="dashboard" id="panel-dashboard">
+    <div id="dashboardBanners"></div>
+    <div class="grid cols-4" id="dashboardStats"></div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h2>Coming up</h2>
+        <p class="hint">Open tasks with the nearest due dates.</p>
+        <div id="dashboardUpcoming"></div>
+      </div>
+      <div class="card">
+        <h2>Club at a glance</h2>
+        <p class="hint">Quick edits — saved automatically.</p>
+        <div class="field">
+          <label for="dashClubName">Club name</label>
+          <input type="text" id="dashClubName">
+        </div>
+        <div class="field">
+          <label for="dashClubYear">Term / academic year</label>
+          <input type="text" id="dashClubYear">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TASKS -->
+  <section class="tab-panel" data-tab="tasks" id="panel-tasks" hidden>
+    <div class="card">
+      <h2 id="taskFormTitle">Add a task</h2>
+      <p class="hint">Tasks are grouped the way club work actually splits up: outreach, marketing, events, logistics, finance.</p>
+      <form id="taskForm">
+        <input type="hidden" id="taskId">
+        <div class="row">
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="taskTitle">Task</label>
+            <input type="text" id="taskTitle" required placeholder="e.g. Book room for general meeting">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="taskCategory">Category</label>
+            <select id="taskCategory">
+              <option>Outreach</option>
+              <option>Marketing</option>
+              <option>Events</option>
+              <option>Logistics</option>
+              <option>Finance</option>
+              <option>General</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="taskAssignee">Assignee</label>
+            <select id="taskAssignee"></select>
+          </div>
+          <div class="field">
+            <label for="taskDue">Due date</label>
+            <input type="date" id="taskDue">
+          </div>
+          <div class="field">
+            <label for="taskStatus">Status</label>
+            <select id="taskStatus">
+              <option value="todo">To Do</option>
+              <option value="doing">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="taskNotes">Notes (optional)</label>
+          <textarea id="taskNotes" placeholder="Context, links, who to contact..."></textarea>
+        </div>
+        <div class="actions">
+          <button type="submit" class="primary" id="taskSubmitBtn">Add task</button>
+          <button type="button" id="taskCancelEdit" hidden>Cancel edit</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="filters">
+        <div>
+          <label for="filterCategory">Category</label>
+          <select id="filterCategory"><option value="">All categories</option></select>
+        </div>
+        <div>
+          <label for="filterAssignee">Assignee</label>
+          <select id="filterAssignee"><option value="">Everyone</option></select>
+        </div>
+        <div>
+          <label for="filterSearch">Search</label>
+          <input type="text" id="filterSearch" placeholder="Search task titles...">
+        </div>
+      </div>
+      <div class="board" id="taskBoard"></div>
+    </div>
+  </section>
+
+  <!-- ROSTER -->
+  <section class="tab-panel" data-tab="roster" id="panel-roster" hidden>
+    <div class="card">
+      <h2 id="memberFormTitle">Add a member</h2>
+      <p class="hint">Mark outgoing officers so the handoff packet knows who needs to leave notes for their successor.</p>
+      <form id="memberForm">
+        <input type="hidden" id="memberId">
+        <div class="row">
+          <div class="field">
+            <label for="memberName">Name</label>
+            <input type="text" id="memberName" required>
+          </div>
+          <div class="field">
+            <label for="memberRole">Role</label>
+            <select id="memberRole">
+              <option>President</option>
+              <option>Vice President</option>
+              <option>Treasurer</option>
+              <option>Secretary</option>
+              <option>Events Chair</option>
+              <option>Marketing Chair</option>
+              <option>Outreach Chair</option>
+              <option>Logistics Chair</option>
+              <option>Advisor</option>
+              <option>Member</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="memberEmail">Email</label>
+            <input type="email" id="memberEmail" placeholder="optional">
+          </div>
+          <div class="field">
+            <label for="memberStatus">Status</label>
+            <select id="memberStatus">
+              <option value="active">Active</option>
+              <option value="outgoing">Outgoing this term</option>
+              <option value="alumni">Alumni</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="memberHandoffNotes">Notes for successor (optional)</label>
+          <textarea id="memberHandoffNotes" placeholder="Vendor contacts, login info, lessons learned, what you'd do differently..."></textarea>
+        </div>
+        <div class="actions">
+          <button type="submit" class="primary" id="memberSubmitBtn">Add member</button>
+          <button type="button" id="memberCancelEdit" hidden>Cancel edit</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Roster</h2>
+      <div id="memberList"></div>
+    </div>
+  </section>
+
+  <!-- FINANCES -->
+  <section class="tab-panel" data-tab="finances" id="panel-finances" hidden>
+    <div class="grid cols-4" id="financeStats"></div>
+
+    <div class="card">
+      <h2 id="financeFormTitle">Log a transaction</h2>
+      <form id="financeForm">
+        <input type="hidden" id="financeId">
+        <div class="row">
+          <div class="field">
+            <label for="financeDate">Date</label>
+            <input type="date" id="financeDate" required>
+          </div>
+          <div class="field">
+            <label for="financeType">Type</label>
+            <select id="financeType">
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="financeCategory">Category</label>
+            <select id="financeCategory">
+              <option>Dues</option>
+              <option>Fundraising</option>
+              <option>Sponsorship</option>
+              <option>Supplies</option>
+              <option>Events</option>
+              <option>Printing</option>
+              <option>Food</option>
+              <option>Travel</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="financeAmount">Amount ($)</label>
+            <input type="number" id="financeAmount" min="0.01" step="0.01" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="financeDesc">Description</label>
+          <input type="text" id="financeDesc" placeholder="e.g. Fall dues from 18 members">
+        </div>
+        <div class="actions">
+          <button type="submit" class="primary" id="financeSubmitBtn">Add transaction</button>
+          <button type="button" id="financeCancelEdit" hidden>Cancel edit</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Starting balance</h2>
+      <div class="field" style="max-width: 220px;">
+        <label for="startingBalance">Balance carried in</label>
+        <input type="number" id="startingBalance" step="0.01">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Ledger</h2>
+      <div id="financeTable"></div>
+    </div>
+  </section>
+
+  <!-- NOTES -> TASKS -->
+  <section class="tab-panel" data-tab="notes" id="panel-notes" hidden>
+    <div class="card">
+      <h2>Turn meeting notes into tasks</h2>
+      <p class="hint">Paste raw meeting notes below. This pulls out likely action items as <strong>suggestions for you to review and edit</strong> — it won't add anything to the board on its own. (Reliable autonomous planning isn't there yet; reliable drafting assistance is.)</p>
+      <div class="field">
+        <label for="notesInput">Meeting notes</label>
+        <textarea id="notesInput" style="min-height: 160px;" placeholder="Paste your notes here. Works best with a bulleted list or an &quot;Action items:&quot; section, e.g.&#10;&#10;Action items:&#10;- Design flyer for bake sale (Maya) by 10/3&#10;- Priya: reserve tables in the quad&#10;- Email sponsor list before Friday"></textarea>
+      </div>
+      <div class="actions">
+        <button type="button" id="extractBtn" class="primary">Extract action items</button>
+        <button type="button" id="clearNotesBtn">Clear</button>
+      </div>
+    </div>
+
+    <div class="card" id="candidatesCard" hidden>
+      <h2>Suggested tasks</h2>
+      <p class="hint">Review and edit each one, then add it to the board.</p>
+      <div id="candidatesList"></div>
+      <div class="actions">
+        <button type="button" id="addAllCandidates" class="primary">Add all to board</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLYER -->
+  <section class="tab-panel" data-tab="flyer" id="panel-flyer" hidden>
+    <div class="card">
+      <h2>Draft a flyer and reminder</h2>
+      <p class="hint">Fill in the event details once, get flyer copy and a short reminder message drafted in three tones. Edit freely before sending — this drafts, it doesn't publish.</p>
+      <form id="flyerForm">
+        <div class="row">
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="flyerEvent">Event name</label>
+            <input type="text" id="flyerEvent" placeholder="e.g. Fall Bake Sale Fundraiser">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="flyerDate">Date</label>
+            <input type="date" id="flyerDate">
+          </div>
+          <div class="field">
+            <label for="flyerTime">Time</label>
+            <input type="time" id="flyerTime">
+          </div>
+          <div class="field">
+            <label for="flyerLocation">Location</label>
+            <input type="text" id="flyerLocation" placeholder="e.g. Student Union Plaza">
+          </div>
+          <div class="field">
+            <label for="flyerTone">Tone</label>
+            <select id="flyerTone">
+              <option value="casual">Casual</option>
+              <option value="professional">Professional</option>
+              <option value="hype">Hype</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="flyerOneLiner">One-line description</label>
+          <input type="text" id="flyerOneLiner" placeholder="e.g. All proceeds go toward regional competition travel.">
+        </div>
+        <div class="actions">
+          <button type="button" id="generateFlyerBtn" class="primary">Generate draft</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card" id="flyerOutputCard" hidden>
+      <h2>Flyer copy</h2>
+      <div class="output-block" id="flyerOutput"></div>
+      <div class="actions">
+        <button type="button" data-copy="flyerOutput">Copy flyer text</button>
+      </div>
+      <h2 style="margin-top:18px;">Reminder message</h2>
+      <div class="output-block" id="reminderOutput"></div>
+      <div class="actions">
+        <button type="button" data-copy="reminderOutput">Copy reminder</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HANDOFF -->
+  <section class="tab-panel" data-tab="handoff" id="panel-handoff" hidden>
+    <div class="card">
+      <h2>Institutional memory</h2>
+      <p class="hint">Notes that should outlive any one officer: meeting time/place, traditions, vendor contacts, lessons learned.</p>
+      <textarea id="clubKnowledge" style="min-height: 120px;" placeholder="e.g. Meets Thursdays 6pm in Eng 220. Order pizza from Rocco's, they give a student discount if you mention the club name. Treasurer needs to submit the budget request by week 2 of term..."></textarea>
+    </div>
+
+    <div class="card">
+      <h2>This term's handoff packet</h2>
+      <p class="hint">Everything the next officer needs on one page.</p>
+      <div id="handoffSummary"></div>
+      <div class="actions">
+        <button type="button" id="downloadPacketBtn" class="primary">Download packet (.txt)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Archive this term &amp; start fresh</h2>
+      <p class="hint">Snapshots the current roster, tasks, and finances into history, then rolls the board forward: done tasks are archived, open tasks carry over, and the ledger starts a new period from the current balance. Roster stays so you can update statuses for the new term.</p>
+      <div class="actions">
+        <button type="button" id="archiveTermBtn" class="danger">Archive &amp; start new term</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Past terms <span class="pill" id="archiveCount">0</span></h2>
+      <p class="hint">The institutional memory this club has built up so far.</p>
+      <div id="archiveList"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="note">
+  All data lives only in this browser's local storage — nothing is sent anywhere. Clearing site data will erase it, so use "Download packet" before you do.
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "sotm-data-v1";
+
+  function uid() {
+    return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function todayISO() {
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+
+  function escapeHtml(str) {
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function formatDate(iso) {
+    if (!iso) return "";
+    var parts = iso.split("-");
+    if (parts.length !== 3) return iso;
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function formatMoney(n) {
+    var v = Number(n) || 0;
+    return "$" + v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function daysUntil(iso) {
+    if (!iso) return null;
+    var today = new Date(todayISO() + "T00:00:00");
+    var due = new Date(iso + "T00:00:00");
+    return Math.round((due - today) / 86400000);
+  }
+
+  function defaultState() {
+    var m1 = uid(), m2 = uid(), m3 = uid();
+    return {
+      club: { name: "Riverside Robotics Club", year: "2025–2026" },
+      members: [
+        { id: m1, name: "Maya Chen", role: "President", email: "maya@school.edu", status: "active", handoffNotes: "" },
+        { id: m2, name: "Jordan Lee", role: "Treasurer", email: "jordan@school.edu", status: "active", handoffNotes: "" },
+        { id: m3, name: "Priya Nair", role: "Events Chair", email: "priya@school.edu", status: "active", handoffNotes: "" }
+      ],
+      tasks: [
+        { id: uid(), title: "Design flyer for bake sale", category: "Marketing", assignee: m1, dueDate: addDays(7), status: "todo", notes: "" },
+        { id: uid(), title: "Reserve tables in the quad", category: "Logistics", assignee: m3, dueDate: addDays(3), status: "doing", notes: "" },
+        { id: uid(), title: "Email sponsor list", category: "Outreach", assignee: "", dueDate: addDays(-1), status: "todo", notes: "Follow up on last year's contacts first" },
+        { id: uid(), title: "Submit budget request to student activities office", category: "Finance", assignee: m2, dueDate: addDays(14), status: "todo", notes: "" },
+        { id: uid(), title: "Book room for general meeting", category: "Logistics", assignee: m1, dueDate: addDays(2), status: "done", notes: "" }
+      ],
+      finances: [
+        { id: uid(), date: addDays(-20), type: "income", category: "Dues", amount: 180, description: "Fall dues from 18 members" },
+        { id: uid(), date: addDays(-10), type: "expense", category: "Printing", amount: 32.5, description: "Flyer printing for kickoff meeting" }
+      ],
+      startingBalance: 500,
+      clubKnowledge: "Meets Thursdays 6pm in Eng 220. Advisor is Prof. Alvarez (alvarez@school.edu). Annual budget request is due week 2 of fall term — don't miss it like we almost did last year.",
+      archive: []
+    };
+  }
+
+  function addDays(n) {
+    var d = new Date();
+    d.setDate(d.getDate() + n);
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+
+  var state = load();
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      var parsed = JSON.parse(raw);
+      if (!parsed || !parsed.club) return defaultState();
+      return parsed;
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      toast("Couldn't save — local storage may be full or disabled.");
+    }
+  }
+
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { el.classList.remove("show"); }, 2200);
+  }
+
+  // ---------- Tabs ----------
+  var tabNav = document.getElementById("tabNav");
+  tabNav.addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-tab]");
+    if (!btn) return;
+    showTab(btn.dataset.tab);
+  });
+
+  function showTab(tab) {
+    document.querySelectorAll(".tab-panel").forEach(function (p) {
+      p.hidden = p.dataset.tab !== tab;
+    });
+    document.querySelectorAll("nav.tabs button").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.tab === tab);
+    });
+    if (tab === "dashboard") renderDashboard();
+    if (tab === "tasks") renderTasks();
+    if (tab === "roster") renderRoster();
+    if (tab === "finances") renderFinances();
+    if (tab === "handoff") renderHandoff();
+  }
+
+  function renderHeader() {
+    document.getElementById("clubNameHeading").textContent = state.club.name || "Club Handoff";
+    document.getElementById("clubYearTag").textContent = state.club.year || "";
+  }
+
+  // ---------- Dashboard ----------
+  function renderDashboard() {
+    renderHeader();
+    document.getElementById("dashClubName").value = state.club.name || "";
+    document.getElementById("dashClubYear").value = state.club.year || "";
+
+    var openTasks = state.tasks.filter(function (t) { return t.status !== "done"; });
+    var overdue = openTasks.filter(function (t) { return t.dueDate && daysUntil(t.dueDate) < 0; });
+    var balance = computeBalance();
+    var outgoingNoNotes = state.members.filter(function (m) {
+      return m.status === "outgoing" && !(m.handoffNotes || "").trim();
+    });
+
+    var banners = document.getElementById("dashboardBanners");
+    banners.innerHTML = "";
+    if (outgoingNoNotes.length) {
+      var b = document.createElement("div");
+      b.className = "banner warn";
+      b.innerHTML = "⚠️ " + outgoingNoNotes.length + " outgoing officer" + (outgoingNoNotes.length > 1 ? "s haven't" : " hasn't") +
+        " left handoff notes yet. <a href=\"#\" data-goto=\"roster\">Go to roster →</a>";
+      banners.appendChild(b);
+    }
+    if (state.archive.length) {
+      var g = document.createElement("div");
+      g.className = "banner good";
+      g.textContent = "📚 " + state.archive.length + " past term" + (state.archive.length > 1 ? "s" : "") + " preserved in the handoff archive.";
+      banners.appendChild(g);
+    }
+    banners.querySelectorAll("[data-goto]").forEach(function (a) {
+      a.addEventListener("click", function (e) { e.preventDefault(); showTab(a.dataset.goto); });
+    });
+
+    var stats = document.getElementById("dashboardStats");
+    stats.innerHTML =
+      stat(openTasks.length, "Open tasks") +
+      stat(overdue.length, "Overdue") +
+      stat(formatMoney(balance), "Current balance") +
+      stat(state.members.filter(function (m) { return m.status === "active"; }).length, "Active officers");
+
+    var upcoming = openTasks.filter(function (t) { return t.dueDate; })
+      .sort(function (a, b) { return a.dueDate.localeCompare(b.dueDate); })
+      .slice(0, 6);
+
+    var upcomingEl = document.getElementById("dashboardUpcoming");
+    if (!upcoming.length) {
+      upcomingEl.innerHTML = "<div class=\"empty-note\">No open tasks with due dates yet.</div>";
+    } else {
+      upcomingEl.innerHTML = upcoming.map(function (t) {
+        var d = daysUntil(t.dueDate);
+        var dueLabel = d < 0 ? Math.abs(d) + "d overdue" : d === 0 ? "today" : "in " + d + "d";
+        return "<div class=\"member-row\"><div><div class=\"name\">" + escapeHtml(t.title) + "</div>" +
+          "<div class=\"sub\">" + escapeHtml(t.category) + " · " + memberName(t.assignee) + "</div></div>" +
+          "<div class=\"sub\" style=\"white-space:nowrap;" + (d < 0 ? "color:var(--danger);font-weight:600;" : "") + "\">" + dueLabel + "</div></div>";
+      }).join("");
+    }
+  }
+
+  function stat(num, label) {
+    return "<div class=\"stat\"><div class=\"num\">" + num + "</div><div class=\"label\">" + label + "</div></div>";
+  }
+
+  document.getElementById("dashClubName").addEventListener("input", function () {
+    state.club.name = this.value; save(); renderHeader();
+  });
+  document.getElementById("dashClubYear").addEventListener("input", function () {
+    state.club.year = this.value; save(); renderHeader();
+  });
+
+  // ---------- Tasks ----------
+  var editingTaskId = null;
+  var taskFilters = { category: "", assignee: "", search: "" };
+
+  function memberName(id) {
+    if (!id) return "Unassigned";
+    var m = state.members.find(function (x) { return x.id === id; });
+    return m ? m.name : "Unassigned";
+  }
+
+  function populateSelectWithMembers(select, includeEmpty) {
+    var current = select.value;
+    select.innerHTML = (includeEmpty ? "<option value=\"\">Unassigned</option>" : "") +
+      state.members.map(function (m) { return "<option value=\"" + m.id + "\">" + escapeHtml(m.name) + "</option>"; }).join("");
+    if (current) select.value = current;
+  }
+
+  function renderTasks() {
+    populateSelectWithMembers(document.getElementById("taskAssignee"), true);
+
+    var filterCat = document.getElementById("filterCategory");
+    var cats = ["Outreach", "Marketing", "Events", "Logistics", "Finance", "General"];
+    filterCat.innerHTML = "<option value=\"\">All categories</option>" + cats.map(function (c) {
+      return "<option value=\"" + c + "\">" + c + "</option>";
+    }).join("");
+    filterCat.value = taskFilters.category;
+
+    var filterAssignee = document.getElementById("filterAssignee");
+    populateSelectWithMembers(filterAssignee, false);
+    filterAssignee.insertAdjacentHTML("afterbegin", "<option value=\"\">Everyone</option>");
+    filterAssignee.value = taskFilters.assignee;
+
+    document.getElementById("filterSearch").value = taskFilters.search;
+
+    var filtered = state.tasks.filter(function (t) {
+      if (taskFilters.category && t.category !== taskFilters.category) return false;
+      if (taskFilters.assignee && t.assignee !== taskFilters.assignee) return false;
+      if (taskFilters.search && t.title.toLowerCase().indexOf(taskFilters.search.toLowerCase()) === -1) return false;
+      return true;
+    });
+
+    var columns = [
+      { key: "todo", label: "To Do" },
+      { key: "doing", label: "In Progress" },
+      { key: "done", label: "Done" }
+    ];
+
+    var board = document.getElementById("taskBoard");
+    board.innerHTML = columns.map(function (col) {
+      var items = filtered.filter(function (t) { return t.status === col.key; });
+      var cardsHtml = items.length
+        ? items.map(renderTaskCard).join("")
+        : "<div class=\"empty-note\">Nothing here.</div>";
+      return "<div class=\"column\"><h3>" + col.label + " <span>" + items.length + "</span></h3>" + cardsHtml + "</div>";
+    }).join("");
+  }
+
+  function renderTaskCard(t) {
+    var d = t.dueDate ? daysUntil(t.dueDate) : null;
+    var overdue = d !== null && d < 0 && t.status !== "done";
+    var dueText = t.dueDate ? formatDate(t.dueDate) + (overdue ? " (overdue)" : "") : "No due date";
+    return "<div class=\"task-card" + (overdue ? " overdue" : "") + "\">" +
+      "<div class=\"title\">" + escapeHtml(t.title) + "</div>" +
+      "<div class=\"meta\"><span>" + escapeHtml(t.category) + "</span><span>" + escapeHtml(memberName(t.assignee)) + "</span><span>" + escapeHtml(dueText) + "</span></div>" +
+      (t.notes ? "<div class=\"meta\" style=\"margin-bottom:8px;\">" + escapeHtml(t.notes) + "</div>" : "") +
+      "<div class=\"cardactions\">" +
+      "<select data-status-for=\"" + t.id + "\">" +
+      "<option value=\"todo\"" + (t.status === "todo" ? " selected" : "") + ">To Do</option>" +
+      "<option value=\"doing\"" + (t.status === "doing" ? " selected" : "") + ">In Progress</option>" +
+      "<option value=\"done\"" + (t.status === "done" ? " selected" : "") + ">Done</option>" +
+      "</select>" +
+      "<button type=\"button\" class=\"small\" data-edit-task=\"" + t.id + "\">Edit</button>" +
+      "<button type=\"button\" class=\"small danger\" data-delete-task=\"" + t.id + "\">Delete</button>" +
+      "</div></div>";
+  }
+
+  document.getElementById("taskBoard").addEventListener("change", function (e) {
+    var sel = e.target.closest("[data-status-for]");
+    if (!sel) return;
+    var t = state.tasks.find(function (x) { return x.id === sel.dataset.statusFor; });
+    if (t) { t.status = sel.value; save(); renderTasks(); renderDashboardIfVisible(); }
+  });
+
+  document.getElementById("taskBoard").addEventListener("click", function (e) {
+    var editBtn = e.target.closest("[data-edit-task]");
+    var delBtn = e.target.closest("[data-delete-task]");
+    if (editBtn) startEditTask(editBtn.dataset.editTask);
+    if (delBtn) {
+      if (confirm("Delete this task?")) {
+        state.tasks = state.tasks.filter(function (t) { return t.id !== delBtn.dataset.deleteTask; });
+        save(); renderTasks(); renderDashboardIfVisible();
+      }
+    }
+  });
+
+  function startEditTask(id) {
+    var t = state.tasks.find(function (x) { return x.id === id; });
+    if (!t) return;
+    editingTaskId = id;
+    document.getElementById("taskId").value = id;
+    document.getElementById("taskTitle").value = t.title;
+    document.getElementById("taskCategory").value = t.category;
+    populateSelectWithMembers(document.getElementById("taskAssignee"), true);
+    document.getElementById("taskAssignee").value = t.assignee || "";
+    document.getElementById("taskDue").value = t.dueDate || "";
+    document.getElementById("taskStatus").value = t.status;
+    document.getElementById("taskNotes").value = t.notes || "";
+    document.getElementById("taskFormTitle").textContent = "Edit task";
+    document.getElementById("taskSubmitBtn").textContent = "Save changes";
+    document.getElementById("taskCancelEdit").hidden = false;
+    document.getElementById("panel-tasks").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function resetTaskForm() {
+    editingTaskId = null;
+    document.getElementById("taskForm").reset();
+    document.getElementById("taskId").value = "";
+    document.getElementById("taskFormTitle").textContent = "Add a task";
+    document.getElementById("taskSubmitBtn").textContent = "Add task";
+    document.getElementById("taskCancelEdit").hidden = true;
+  }
+
+  document.getElementById("taskCancelEdit").addEventListener("click", resetTaskForm);
+
+  document.getElementById("taskForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var title = document.getElementById("taskTitle").value.trim();
+    if (!title) return;
+    var data = {
+      title: title,
+      category: document.getElementById("taskCategory").value,
+      assignee: document.getElementById("taskAssignee").value,
+      dueDate: document.getElementById("taskDue").value,
+      status: document.getElementById("taskStatus").value,
+      notes: document.getElementById("taskNotes").value.trim()
+    };
+    if (editingTaskId) {
+      var t = state.tasks.find(function (x) { return x.id === editingTaskId; });
+      Object.assign(t, data);
+      toast("Task updated");
+    } else {
+      data.id = uid();
+      state.tasks.push(data);
+      toast("Task added");
+    }
+    save();
+    resetTaskForm();
+    renderTasks();
+    renderDashboardIfVisible();
+  });
+
+  ["filterCategory", "filterAssignee"].forEach(function (id) {
+    document.getElementById(id).addEventListener("change", function () {
+      taskFilters.category = document.getElementById("filterCategory").value;
+      taskFilters.assignee = document.getElementById("filterAssignee").value;
+      renderTasks();
+    });
+  });
+  document.getElementById("filterSearch").addEventListener("input", function () {
+    taskFilters.search = this.value;
+    renderTasks();
+  });
+
+  // ---------- Roster ----------
+  var editingMemberId = null;
+
+  function renderRoster() {
+    var list = document.getElementById("memberList");
+    if (!state.members.length) {
+      list.innerHTML = "<div class=\"empty-note\">No members yet.</div>";
+      return;
+    }
+    var order = { active: 0, outgoing: 1, alumni: 2 };
+    var sorted = state.members.slice().sort(function (a, b) { return order[a.status] - order[b.status]; });
+    list.innerHTML = sorted.map(function (m) {
+      return "<div class=\"member-row\">" +
+        "<div><div class=\"name\">" + escapeHtml(m.name) + " <span class=\"pill role-" + m.status + "\">" + statusLabel(m.status) + "</span></div>" +
+        "<div class=\"sub\">" + escapeHtml(m.role) + (m.email ? " · " + escapeHtml(m.email) : "") + "</div>" +
+        (m.handoffNotes ? "<div class=\"sub\" style=\"margin-top:4px;max-width:520px;\">📝 " + escapeHtml(m.handoffNotes) + "</div>" : "") +
+        "</div>" +
+        "<div class=\"cardactions\" style=\"flex-direction:column;align-items:flex-end;\">" +
+        "<button type=\"button\" class=\"small\" data-edit-member=\"" + m.id + "\">Edit</button>" +
+        "<button type=\"button\" class=\"small danger\" data-delete-member=\"" + m.id + "\">Remove</button>" +
+        "</div></div>";
+    }).join("");
+  }
+
+  function statusLabel(s) {
+    return s === "active" ? "Active" : s === "outgoing" ? "Outgoing" : "Alumni";
+  }
+
+  document.getElementById("memberList").addEventListener("click", function (e) {
+    var editBtn = e.target.closest("[data-edit-member]");
+    var delBtn = e.target.closest("[data-delete-member]");
+    if (editBtn) startEditMember(editBtn.dataset.editMember);
+    if (delBtn) {
+      if (confirm("Remove this member from the roster?")) {
+        state.members = state.members.filter(function (m) { return m.id !== delBtn.dataset.deleteMember; });
+        state.tasks.forEach(function (t) { if (t.assignee === delBtn.dataset.deleteMember) t.assignee = ""; });
+        save(); renderRoster();
+      }
+    }
+  });
+
+  function startEditMember(id) {
+    var m = state.members.find(function (x) { return x.id === id; });
+    if (!m) return;
+    editingMemberId = id;
+    document.getElementById("memberId").value = id;
+    document.getElementById("memberName").value = m.name;
+    document.getElementById("memberRole").value = m.role;
+    document.getElementById("memberEmail").value = m.email || "";
+    document.getElementById("memberStatus").value = m.status;
+    document.getElementById("memberHandoffNotes").value = m.handoffNotes || "";
+    document.getElementById("memberFormTitle").textContent = "Edit member";
+    document.getElementById("memberSubmitBtn").textContent = "Save changes";
+    document.getElementById("memberCancelEdit").hidden = false;
+    document.getElementById("panel-roster").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function resetMemberForm() {
+    editingMemberId = null;
+    document.getElementById("memberForm").reset();
+    document.getElementById("memberId").value = "";
+    document.getElementById("memberFormTitle").textContent = "Add a member";
+    document.getElementById("memberSubmitBtn").textContent = "Add member";
+    document.getElementById("memberCancelEdit").hidden = true;
+  }
+
+  document.getElementById("memberCancelEdit").addEventListener("click", resetMemberForm);
+
+  document.getElementById("memberForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = document.getElementById("memberName").value.trim();
+    if (!name) return;
+    var data = {
+      name: name,
+      role: document.getElementById("memberRole").value,
+      email: document.getElementById("memberEmail").value.trim(),
+      status: document.getElementById("memberStatus").value,
+      handoffNotes: document.getElementById("memberHandoffNotes").value.trim()
+    };
+    if (editingMemberId) {
+      Object.assign(state.members.find(function (x) { return x.id === editingMemberId; }), data);
+      toast("Member updated");
+    } else {
+      data.id = uid();
+      state.members.push(data);
+      toast("Member added");
+    }
+    save();
+    resetMemberForm();
+    renderRoster();
+    renderDashboardIfVisible();
+  });
+
+  // ---------- Finances ----------
+  var editingFinanceId = null;
+
+  function computeBalance() {
+    var income = state.finances.filter(function (f) { return f.type === "income"; }).reduce(function (s, f) { return s + Number(f.amount); }, 0);
+    var expense = state.finances.filter(function (f) { return f.type === "expense"; }).reduce(function (s, f) { return s + Number(f.amount); }, 0);
+    return Number(state.startingBalance || 0) + income - expense;
+  }
+
+  function renderFinances() {
+    document.getElementById("startingBalance").value = state.startingBalance;
+
+    var income = state.finances.filter(function (f) { return f.type === "income"; }).reduce(function (s, f) { return s + Number(f.amount); }, 0);
+    var expense = state.finances.filter(function (f) { return f.type === "expense"; }).reduce(function (s, f) { return s + Number(f.amount); }, 0);
+
+    document.getElementById("financeStats").innerHTML =
+      stat(formatMoney(state.startingBalance || 0), "Starting balance") +
+      stat(formatMoney(income), "Total income") +
+      stat(formatMoney(expense), "Total expenses") +
+      stat(formatMoney(computeBalance()), "Current balance");
+
+    var sorted = state.finances.slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
+    var table = document.getElementById("financeTable");
+    if (!sorted.length) {
+      table.innerHTML = "<div class=\"empty-note\">No transactions logged yet.</div>";
+      return;
+    }
+    table.innerHTML = "<table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th><th></th></tr></thead><tbody>" +
+      sorted.map(function (f) {
+        return "<tr><td>" + formatDate(f.date) + "</td>" +
+          "<td>" + (f.type === "income" ? "<span class=\"pill role-active\">Income</span>" : "<span class=\"pill role-outgoing\">Expense</span>") + "</td>" +
+          "<td>" + escapeHtml(f.category) + "</td>" +
+          "<td>" + escapeHtml(f.description || "") + "</td>" +
+          "<td>" + (f.type === "expense" ? "−" : "") + formatMoney(f.amount) + "</td>" +
+          "<td><button type=\"button\" class=\"small\" data-edit-finance=\"" + f.id + "\">Edit</button> " +
+          "<button type=\"button\" class=\"small danger\" data-delete-finance=\"" + f.id + "\">Delete</button></td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+
+  document.getElementById("financeTable").addEventListener("click", function (e) {
+    var editBtn = e.target.closest("[data-edit-finance]");
+    var delBtn = e.target.closest("[data-delete-finance]");
+    if (editBtn) startEditFinance(editBtn.dataset.editFinance);
+    if (delBtn) {
+      if (confirm("Delete this transaction?")) {
+        state.finances = state.finances.filter(function (f) { return f.id !== delBtn.dataset.deleteFinance; });
+        save(); renderFinances();
+      }
+    }
+  });
+
+  function startEditFinance(id) {
+    var f = state.finances.find(function (x) { return x.id === id; });
+    if (!f) return;
+    editingFinanceId = id;
+    document.getElementById("financeId").value = id;
+    document.getElementById("financeDate").value = f.date;
+    document.getElementById("financeType").value = f.type;
+    document.getElementById("financeCategory").value = f.category;
+    document.getElementById("financeAmount").value = f.amount;
+    document.getElementById("financeDesc").value = f.description || "";
+    document.getElementById("financeFormTitle").textContent = "Edit transaction";
+    document.getElementById("financeSubmitBtn").textContent = "Save changes";
+    document.getElementById("financeCancelEdit").hidden = false;
+    document.getElementById("panel-finances").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function resetFinanceForm() {
+    editingFinanceId = null;
+    document.getElementById("financeForm").reset();
+    document.getElementById("financeId").value = "";
+    document.getElementById("financeDate").value = todayISO();
+    document.getElementById("financeFormTitle").textContent = "Log a transaction";
+    document.getElementById("financeSubmitBtn").textContent = "Add transaction";
+    document.getElementById("financeCancelEdit").hidden = true;
+  }
+
+  document.getElementById("financeCancelEdit").addEventListener("click", resetFinanceForm);
+
+  document.getElementById("financeForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var amount = parseFloat(document.getElementById("financeAmount").value);
+    if (!amount || amount <= 0) return;
+    var data = {
+      date: document.getElementById("financeDate").value || todayISO(),
+      type: document.getElementById("financeType").value,
+      category: document.getElementById("financeCategory").value,
+      amount: amount,
+      description: document.getElementById("financeDesc").value.trim()
+    };
+    if (editingFinanceId) {
+      Object.assign(state.finances.find(function (x) { return x.id === editingFinanceId; }), data);
+      toast("Transaction updated");
+    } else {
+      data.id = uid();
+      state.finances.push(data);
+      toast("Transaction added");
+    }
+    save();
+    resetFinanceForm();
+    renderFinances();
+    renderDashboardIfVisible();
+  });
+
+  document.getElementById("startingBalance").addEventListener("change", function () {
+    state.startingBalance = parseFloat(this.value) || 0;
+    save(); renderFinances(); renderDashboardIfVisible();
+  });
+
+  // ---------- Notes -> Tasks ----------
+  var candidates = [];
+
+  function parseActionItems(text) {
+    var lines = text.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    var headingRe = /^(action items?|todo|to-?do list|next steps|tasks?)\s*:?\s*$/i;
+    var headingIdx = -1;
+    for (var i = 0; i < lines.length; i++) {
+      if (headingRe.test(lines[i])) { headingIdx = i; break; }
+    }
+    var raw = [];
+    if (headingIdx !== -1) {
+      for (var j = headingIdx + 1; j < lines.length; j++) {
+        if (headingRe.test(lines[j])) break;
+        raw.push(lines[j]);
+      }
+    } else {
+      raw = lines.filter(function (l) { return /^[-*•]\s+/.test(l) || /^\d+[.)]\s+/.test(l); });
+      if (!raw.length) {
+        raw = lines.filter(function (l) { return /\b(will|todo|to-do|action item)\b/i.test(l); });
+      }
+    }
+    return raw.map(function (l) { return l.replace(/^[-*•]\s+/, "").replace(/^\d+[.)]\s+/, ""); })
+      .filter(Boolean)
+      .map(parseCandidateLine);
+  }
+
+  function parseCandidateLine(line) {
+    var assignee = "";
+    var title = line;
+
+    var colonMatch = line.match(/^([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?)\s*:\s*(.+)$/);
+    var parenMatch = line.match(/^(.*)\(([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?)\)\s*(.*)$/);
+    var atMatch = line.match(/@([A-Za-z]+(?:\s[A-Za-z]+)?)/);
+
+    if (colonMatch) {
+      assignee = colonMatch[1];
+      title = colonMatch[2];
+    } else if (parenMatch) {
+      assignee = parenMatch[2];
+      title = (parenMatch[1] + " " + parenMatch[3]).trim();
+    } else if (atMatch) {
+      assignee = atMatch[1];
+      title = line.replace(atMatch[0], "").trim();
+    }
+
+    var dueGuess = "";
+    var dateMatch = line.match(/\b(?:by|due)\s+([A-Za-z]+\.?\s?\d{1,2}(?:st|nd|rd|th)?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\b/i);
+    if (dateMatch) {
+      dueGuess = dateMatch[1];
+      title = title.replace(dateMatch[0], "").trim();
+    }
+
+    title = title.replace(/\s{2,}/g, " ").replace(/[\s,:-]+$/, "").trim();
+
+    return { rawLine: line, title: title || line, assigneeGuess: assignee, dueGuess: dueGuess, category: "General" };
+  }
+
+  document.getElementById("extractBtn").addEventListener("click", function () {
+    var text = document.getElementById("notesInput").value;
+    candidates = parseActionItems(text);
+    renderCandidates();
+    if (!candidates.length) toast("Couldn't find clear action items — try an \"Action items:\" list.");
+  });
+
+  document.getElementById("clearNotesBtn").addEventListener("click", function () {
+    document.getElementById("notesInput").value = "";
+    candidates = [];
+    renderCandidates();
+  });
+
+  function renderCandidates() {
+    var card = document.getElementById("candidatesCard");
+    var list = document.getElementById("candidatesList");
+    if (!candidates.length) {
+      card.hidden = true;
+      list.innerHTML = "";
+      return;
+    }
+    card.hidden = false;
+    list.innerHTML = candidates.map(function (c, idx) {
+      return "<div class=\"candidate\" data-idx=\"" + idx + "\">" +
+        "<div class=\"rawline\">From: “" + escapeHtml(c.rawLine) + "”</div>" +
+        "<div class=\"row\">" +
+        "<div class=\"field\" style=\"grid-column: 1 / -1;\"><label>Task</label><input type=\"text\" data-c-title value=\"" + escapeHtml(c.title) + "\"></div>" +
+        "</div>" +
+        "<div class=\"row\">" +
+        "<div class=\"field\"><label>Category</label><select data-c-category>" +
+        ["Outreach", "Marketing", "Events", "Logistics", "Finance", "General"].map(function (cat) {
+          return "<option" + (cat === c.category ? " selected" : "") + ">" + cat + "</option>";
+        }).join("") + "</select></div>" +
+        "<div class=\"field\"><label>Assignee</label><select data-c-assignee>" +
+        "<option value=\"\">Unassigned</option>" +
+        state.members.map(function (m) {
+          var matched = c.assigneeGuess && m.name.toLowerCase().indexOf(c.assigneeGuess.toLowerCase()) !== -1;
+          return "<option value=\"" + m.id + "\"" + (matched ? " selected" : "") + ">" + escapeHtml(m.name) + "</option>";
+        }).join("") + "</select></div>" +
+        "<div class=\"field\"><label>Due date</label><input type=\"date\" data-c-due></div>" +
+        "</div>" +
+        (c.dueGuess ? "<div class=\"rawline\">Detected phrase: “" + escapeHtml(c.dueGuess) + "” — pick the actual date above.</div>" : "") +
+        "<div class=\"actions\">" +
+        "<button type=\"button\" class=\"small primary\" data-add-candidate=\"" + idx + "\">Add to board</button>" +
+        "<button type=\"button\" class=\"small\" data-dismiss-candidate=\"" + idx + "\">Dismiss</button>" +
+        "</div></div>";
+    }).join("");
+  }
+
+  function readCandidateForm(el) {
+    return {
+      title: el.querySelector("[data-c-title]").value.trim(),
+      category: el.querySelector("[data-c-category]").value,
+      assignee: el.querySelector("[data-c-assignee]").value,
+      dueDate: el.querySelector("[data-c-due]").value
+    };
+  }
+
+  document.getElementById("candidatesList").addEventListener("click", function (e) {
+    var addBtn = e.target.closest("[data-add-candidate]");
+    var dismissBtn = e.target.closest("[data-dismiss-candidate]");
+    if (addBtn) {
+      var el = addBtn.closest(".candidate");
+      var data = readCandidateForm(el);
+      if (!data.title) { toast("Task needs a title"); return; }
+      state.tasks.push({ id: uid(), title: data.title, category: data.category, assignee: data.assignee, dueDate: data.dueDate, status: "todo", notes: "" });
+      save();
+      var idx = Number(el.dataset.idx);
+      candidates.splice(idx, 1);
+      renderCandidates();
+      toast("Added to board");
+    }
+    if (dismissBtn) {
+      var el2 = dismissBtn.closest(".candidate");
+      candidates.splice(Number(el2.dataset.idx), 1);
+      renderCandidates();
+    }
+  });
+
+  document.getElementById("addAllCandidates").addEventListener("click", function () {
+    document.querySelectorAll("#candidatesList .candidate").forEach(function (el) {
+      var data = readCandidateForm(el);
+      if (data.title) {
+        state.tasks.push({ id: uid(), title: data.title, category: data.category, assignee: data.assignee, dueDate: data.dueDate, status: "todo", notes: "" });
+      }
+    });
+    save();
+    candidates = [];
+    renderCandidates();
+    toast("Added to board");
+  });
+
+  // ---------- Flyer & Reminders ----------
+  function generateFlyer(f) {
+    var dateStr = f.date ? formatDate(f.date) : "Date TBD";
+    var timeStr = f.time || "Time TBD";
+    var location = f.location || "Location TBD";
+    var oneLiner = f.oneLiner || "";
+    var name = f.name || "Untitled Event";
+
+    var flyers = {
+      casual: "📣 " + name + "!\n\n📅 " + dateStr + "  ·  🕒 " + timeStr + "\n📍 " + location + "\n\n" + oneLiner + "\n\nCome through — bring a friend!",
+      professional: name + "\n\nDate: " + dateStr + "\nTime: " + timeStr + "\nLocation: " + location + "\n\n" + oneLiner + "\n\nAll members are welcome to attend.",
+      hype: "🚨 " + name.toUpperCase() + " IS HAPPENING 🚨\n\n" + dateStr + "  |  " + timeStr + "  |  " + location + "\n\n" + oneLiner + "\n\nDon't miss this one!!"
+    };
+
+    var reminders = {
+      casual: "Hey everyone! Quick reminder: " + name + " is " + dateStr + " at " + timeStr + ", " + location + ". " + oneLiner + " See you there!",
+      professional: "Reminder: " + name + " will take place on " + dateStr + " at " + timeStr + " in " + location + ". " + oneLiner,
+      hype: "🔥 Reminder!! " + name + " — " + dateStr + " " + timeStr + " @ " + location + ". " + oneLiner + " Don't miss it!!"
+    };
+
+    var tone = f.tone in flyers ? f.tone : "casual";
+    return { flyer: flyers[tone], reminder: reminders[tone] };
+  }
+
+  document.getElementById("generateFlyerBtn").addEventListener("click", function () {
+    var out = generateFlyer({
+      name: document.getElementById("flyerEvent").value.trim(),
+      date: document.getElementById("flyerDate").value,
+      time: document.getElementById("flyerTime").value,
+      location: document.getElementById("flyerLocation").value.trim(),
+      oneLiner: document.getElementById("flyerOneLiner").value.trim(),
+      tone: document.getElementById("flyerTone").value
+    });
+    document.getElementById("flyerOutput").textContent = out.flyer;
+    document.getElementById("reminderOutput").textContent = out.reminder;
+    document.getElementById("flyerOutputCard").hidden = false;
+    document.getElementById("flyerOutputCard").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
+  document.querySelectorAll("[data-copy]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = document.getElementById(btn.dataset.copy).textContent;
+      copyText(text);
+    });
+  });
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        toast("Copied to clipboard");
+      }).catch(function () { fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); toast("Copied to clipboard"); }
+    catch (e) { toast("Copy failed — select the text manually"); }
+    document.body.removeChild(ta);
+  }
+
+  // ---------- Handoff ----------
+  document.getElementById("clubKnowledge").addEventListener("input", function () {
+    state.clubKnowledge = this.value;
+    save();
+  });
+
+  function buildPacketText() {
+    var lines = [];
+    lines.push(state.club.name + " — Handoff Packet");
+    lines.push(state.club.year || "");
+    lines.push("Generated " + formatDate(todayISO()));
+    lines.push("");
+    lines.push("=== INSTITUTIONAL KNOWLEDGE ===");
+    lines.push(state.clubKnowledge || "(none recorded)");
+    lines.push("");
+    lines.push("=== ROSTER ===");
+    state.members.forEach(function (m) {
+      lines.push("- " + m.name + " (" + m.role + ", " + statusLabel(m.status) + ")" + (m.email ? " — " + m.email : ""));
+      if (m.handoffNotes) lines.push("    Notes: " + m.handoffNotes);
+    });
+    lines.push("");
+    lines.push("=== OPEN TASKS ===");
+    var open = state.tasks.filter(function (t) { return t.status !== "done"; });
+    if (!open.length) lines.push("(none)");
+    open.forEach(function (t) {
+      lines.push("- [" + (t.status === "doing" ? "in progress" : "to do") + "] " + t.title + " — " + t.category + ", " + memberName(t.assignee) + (t.dueDate ? ", due " + formatDate(t.dueDate) : ""));
+    });
+    lines.push("");
+    lines.push("=== FINANCES ===");
+    lines.push("Starting balance: " + formatMoney(state.startingBalance || 0));
+    lines.push("Current balance: " + formatMoney(computeBalance()));
+    lines.push("Recent transactions:");
+    state.finances.slice().sort(function (a, b) { return b.date.localeCompare(a.date); }).slice(0, 10).forEach(function (f) {
+      lines.push("- " + formatDate(f.date) + " " + (f.type === "income" ? "+" : "-") + formatMoney(f.amount) + " (" + f.category + ") " + (f.description || ""));
+    });
+    lines.push("");
+    lines.push("=== PAST TERMS ON FILE ===");
+    lines.push(state.archive.length ? state.archive.length + " archived term(s) — see the app's Handoff tab." : "(none yet)");
+    return lines.join("\n");
+  }
+
+  function renderHandoff() {
+    document.getElementById("clubKnowledge").value = state.clubKnowledge || "";
+    var open = state.tasks.filter(function (t) { return t.status !== "done"; });
+    var done = state.tasks.filter(function (t) { return t.status === "done"; });
+    var active = state.members.filter(function (m) { return m.status === "active"; });
+    var outgoing = state.members.filter(function (m) { return m.status === "outgoing"; });
+
+    var html = "<div class=\"grid cols-3\">" +
+      stat(active.length, "Active officers") +
+      stat(outgoing.length, "Outgoing officers") +
+      stat(open.length + "/" + state.tasks.length, "Tasks open / total") +
+      "</div>";
+
+    html += "<div style=\"margin-top:14px;\"><strong>Completed this term:</strong> " + done.length + " tasks</div>";
+    html += "<div><strong>Current balance:</strong> " + formatMoney(computeBalance()) + "</div>";
+
+    if (outgoing.length) {
+      html += "<div style=\"margin-top:10px;\"><strong>Outgoing officers &amp; their notes:</strong></div><ul>";
+      outgoing.forEach(function (m) {
+        html += "<li>" + escapeHtml(m.name) + " (" + escapeHtml(m.role) + ") — " + (m.handoffNotes ? escapeHtml(m.handoffNotes) : "<em>no notes left yet</em>") + "</li>";
+      });
+      html += "</ul>";
+    }
+
+    document.getElementById("handoffSummary").innerHTML = html;
+
+    document.getElementById("archiveCount").textContent = state.archive.length;
+    var archiveList = document.getElementById("archiveList");
+    if (!state.archive.length) {
+      archiveList.innerHTML = "<div class=\"empty-note\">No past terms archived yet. When you archive this term, it'll show up here.</div>";
+    } else {
+      archiveList.innerHTML = state.archive.map(function (a) {
+        var doneCount = a.tasks.filter(function (t) { return t.status === "done"; }).length;
+        return "<details class=\"archive-entry\"><summary>" + escapeHtml(a.year) + " — archived " + formatDate(a.archivedOn) + "</summary>" +
+          "<div><strong>Roster:</strong> " + a.members.map(function (m) { return escapeHtml(m.name) + " (" + escapeHtml(m.role) + ")"; }).join(", ") + "</div>" +
+          "<div><strong>Tasks completed:</strong> " + doneCount + " / " + a.tasks.length + "</div>" +
+          "<div><strong>Ending balance:</strong> " + formatMoney(a.endingBalance) + "</div>" +
+          (a.clubKnowledge ? "<div><strong>Notes left:</strong> " + escapeHtml(a.clubKnowledge) + "</div>" : "") +
+          "</details>";
+      }).join("");
+    }
+  }
+
+  document.getElementById("downloadPacketBtn").addEventListener("click", function () {
+    var text = buildPacketText();
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    var safeName = (state.club.name || "club").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    a.download = safeName + "-handoff-packet.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast("Packet downloaded");
+  });
+
+  function nextYearLabel(label) {
+    var m = (label || "").match(/(\d{4})\D+(\d{4})/);
+    if (m) return (Number(m[1]) + 1) + "–" + (Number(m[2]) + 1);
+    return (label || "Club") + " (New Term)";
+  }
+
+  document.getElementById("archiveTermBtn").addEventListener("click", function () {
+    if (!confirm("Archive \"" + state.club.year + "\" and start a new term? Done tasks will move to history, open tasks carry over, and the ledger resets from today's balance.")) return;
+
+    var endingBalance = computeBalance();
+    state.archive.unshift({
+      year: state.club.year,
+      club: JSON.parse(JSON.stringify(state.club)),
+      members: JSON.parse(JSON.stringify(state.members)),
+      tasks: JSON.parse(JSON.stringify(state.tasks)),
+      finances: JSON.parse(JSON.stringify(state.finances)),
+      clubKnowledge: state.clubKnowledge,
+      endingBalance: endingBalance,
+      archivedOn: todayISO()
+    });
+
+    state.tasks = state.tasks.filter(function (t) { return t.status !== "done"; });
+    state.finances = [];
+    state.startingBalance = endingBalance;
+    state.club.year = nextYearLabel(state.club.year);
+
+    save();
+    renderHandoff();
+    renderHeader();
+    toast("Term archived — new term started");
+  });
+
+  // ---------- Cross-tab dashboard refresh ----------
+  function renderDashboardIfVisible() {
+    var panel = document.getElementById("panel-dashboard");
+    if (panel && !panel.hidden) renderDashboard();
+  }
+
+  // ---------- Init ----------
+  document.getElementById("financeDate").value = todayISO();
+  document.getElementById("flyerDate").value = todayISO();
+  renderHeader();
+  renderDashboard();
+})();
+</script>
+</body>
+</html>
